@@ -1,0 +1,64 @@
+#!/bin/bash
+
+last=145000
+
+n=20
+start=103300
+let end=start+n
+
+echo -n > log.txt
+time (
+seq $start $end | xargs -P 16 -I {} bash -c '
+	url="'https://cdn.intra.42.fr/pdf/pdf/'{}'/en.subject.pdf'"
+	response=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
+	# if [ "$response" -eq 200 ]; then
+	# 	echo {} >> log.txt
+	# fi
+'
+)
+# to do...
+exit
+echo -n > log.txt
+time (
+for (( i=start; i<=end; i++ ))
+do
+	# let per=end-i
+	# let per=n-per
+	# let cur=per
+	# let per=per*10000
+	# let per=per/n
+	# let per=per*100
+	# let per=per/10000
+	# echo -ne "Getting subject $i, $cur/$n items, $per% Done \r"
+	# echo -n "$i " >> log.txt
+	# curl -s -o /dev/null -w "%{http_code}\n" --head --request GET https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf >> log.txt
+	curl -s --head --request GET https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf | head -n 1
+	# wget -qO en.subject.pdf.$i https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
+	# if [ $? -eq 0 ]; then
+	# 	NAME=$(pdftotext -l 1 en.subject.pdf.$i - | head -n 1)
+	# 	NAME+=.v$(pdftotext -l 1 en.subject.pdf.$i - | grep 'Version:' | cut -d' ' -f2)
+	# 	mv en.subject.pdf.$i en.subject.pdf.$i.$NAME
+	# 	echo "Recieved subject $i.$NAME" >> log.txt
+	# fi
+done
+)
+find . -type f -empty -delete
+echo -ne '\n'
+
+exit
+if curl -s --head --request GET https://example.com | grep "200 OK" > /dev/null; then
+	echo -n "$i " >> log.txt
+fi
+
+exit
+first_part="http://example.com/page"
+last_part=".html"
+
+# Generate numbers from 0 to 100 and check URLs in parallel
+seq 0 100 | xargs -P 100 -I {} bash -c '
+	url="'$first_part'{}'$last_part'"
+	response=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
+	if [ "$response" -eq 200 ]; then
+		echo "URL exists: $url"
+	fi
+'
