@@ -8,7 +8,7 @@ let end=start+n
 
 echo -n > log.txt
 time (
-seq $start $end | xargs -P 16 -I {} bash -c '
+seq $start $end | xargs -P 200 -I {} bash -c '
 	url="'https://cdn.intra.42.fr/pdf/pdf/'{}'/en.subject.pdf'"
 	response=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
 	# if [ "$response" -eq 200 ]; then
@@ -46,6 +46,8 @@ find . -type f -empty -delete
 echo -ne '\n'
 
 exit
+# if curl --head --silent --fail ftp://ftp.somewhere.com/bigfile.gz 2> /dev/null;
+
 if curl -s --head --request GET https://example.com | grep "200 OK" > /dev/null; then
 	echo -n "$i " >> log.txt
 fi
