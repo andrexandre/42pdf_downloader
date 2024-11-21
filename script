@@ -2,18 +2,19 @@
 
 last=145000
 
-n=20
-start=103300
+n=75
+start=1500
 let end=start+n
 
 echo -n > log.txt
 time (
 seq $start $end | xargs -P 200 -I {} bash -c '
-	url="'https://cdn.intra.42.fr/pdf/pdf/'{}'/en.subject.pdf'"
+	url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
 	response=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
-	# if [ "$response" -eq 200 ]; then
-	# 	echo {} >> log.txt
-	# fi
+	if [ "$response" -eq 200 ]; then
+		# wget -qO en.subject.pdf.{} https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
+		echo {} >> log.txt
+	fi
 '
 )
 # to do...
