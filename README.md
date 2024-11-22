@@ -9,6 +9,7 @@
 ## Objetivos
 
 #### Fazer previamente (criação do ficheiro db.txt):
+- Ver a maneira mais rapida de verificar se uma pagina existe
 - Verificar se a pagina existe
 - Fazer o download do pdf existente
 - Atualizar a db.txt com os valores de $NAME $ID $VER
