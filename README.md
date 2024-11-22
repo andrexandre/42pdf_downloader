@@ -1,6 +1,6 @@
 # Missão
 - Possibilidade de retirar os subjects da cloud da 42
-- Catalogar os subjects em categorias
+- Catalogar os subjects em categorias (c and cpp-modules)
 - Quando for preciso so escolher qual subject quer fazer download
 - Mais tarde
 	- Atualização ocasional de novos subjects
