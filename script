@@ -1,57 +1,76 @@
 #!/bin/bash
 
-# last=145000
+clear
+echo -n > log.txt
 
-# n=75
-# start=1500
-# let end=start+n
+# VARIABLES
+# lastest=145000
 start=103000
-n=1000
+n=5
 let end=start+n
-# echo -n > log.txt
-# time (
-# seq $start $end | xargs -P 200 -I {} bash -c '
-# 	url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
-# 	response=$(curl -o /dev/null -s -w "%{http_code}\n" "$url")
-# 	if [ "$response" -eq 200 ]; then
-# 		# wget -qO en.subject.pdf.{} https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
-# 		echo {} >> log.txt
-# 	fi
-# '
-# )
-# # to do...
-# exit
-# echo -n > log.txt
-# time (
-for (( i=start; i<=end; i++ ))
-do
+
+# SLOW BUT READABLE CODE
+slow()
+{
+	for (( i=start; i<=end; i++ ))
+	do
+		url=https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
+		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt # 200
+	done
+}
+
+# FAST BUT UNREADABLE CODE
+fast()
+{
+	seq $start $end | xargs -P 200 -I {} bash -c '
+		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
+		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
+		echo {} >> log.txt
+	'
+}
+
+# MAIN
+# slow
+fast
+
+# INFORMATION
+# put time ( function ) to measure the time taken
+# currently using curl -s -o /dev/null -w "%{http_code}\n" --head $url
+
+set_percentage()
+{
 	let per=end-i
 	let per=n-per
 	let cur=per
 	let per=per*10000
 	let per=per/n
 	let per=per*100
-	let per=per/10000
-	echo -ne "Getting subject $i, $cur/$n items, $per% Done \r"
-	# echo -n "$i " >> log.txt
-	# curl -s -o /dev/null -w "%{http_code}\n" --head --request GET https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf >> log.txt
-	# curl -s --head --request GET https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf | head -n 1
-	wget -qO en.subject.pdf.$i https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
-	# if [ $? -eq 0 ]; then
-	# 	NAME=$(pdftotext -l 1 en.subject.pdf.$i - | head -n 1)
-	# 	NAME+=.v$(pdftotext -l 1 en.subject.pdf.$i - | grep 'Version:' | cut -d' ' -f2)
-	# 	mv en.subject.pdf.$i en.subject.pdf.$i.$NAME
-	# 	echo "Recieved subject $i.$NAME" >> log.txt
-	# fi
-done
-# )
-find . -type f -empty -delete
-echo -ne '\n'
+	let per=per/10000	
+}
+# to show percentage, put this lines in each loop:
+# set_percentage
+# echo -ne "Getting subject $i, $cur/$n items, $per% Done \r"
+# and this in the end:
+# echo -ne '\n'
 
-exit
-# --fail doesn't return html doc in case of error
-# if curl --head --silent --fail ftp://ftp.somewhere.com/bigfile.gz 2> /dev/null;
+# commands to check the existance of pdf on server
+# curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt # 200
+# curl -s -o /dev/null -w "%{http_code}\n" $url >> log.txt # 200
+# curl -s -f --head $url | head -n 1 >> log.txt # HTTP/1.1 200 OK
+# curl -s --head $url | head -n 1 >> log.txt # HTTP/1.1 200 OK
+# check the output of the executed command
+# if [ "$(COMMAND)" -eq 200 ]; then
 
-if curl -s --head --request GET https://example.com | grep "200 OK" > /dev/null; then
-	echo -n "$i " >> log.txt
-fi
+# command to download the pdf no matter what
+# VAR=$i for the slow way, VAR={} for the fast way
+# wget -qO en.subject.pdf.VAR $url # return the pdf not empty
+# check the status code of the executed command and format the name of the pdf
+# Bug: needs check in case of no version
+# if [ $? -eq 0 ]; then
+# 	NAME=$(pdftotext -l 1 en.subject.pdf.VAR - | head -n 1)
+# 	NAME+=.v$(pdftotext -l 1 en.subject.pdf.VAR - | grep 'Version:' | cut -d' ' -f2)
+# 	mv en.subject.pdf.VAR en.subject.pdf.VAR.$NAME
+# 	echo "Recieved subject VAR.$NAME" >> log.txt
+# fi
+# after running the command, clean the empty files
+# find . -type f -empty -delete
