@@ -15,7 +15,7 @@ slow()
 	for (( i=start; i<=end; i++ ))
 	do
 		url=https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
-		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt # 200
+		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
 	done
 }
 
@@ -25,7 +25,6 @@ fast()
 	seq $start $end | xargs -P 200 -I {} bash -c '
 		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
 		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
-		echo {} >> log.txt
 	'
 }
 
@@ -35,7 +34,6 @@ fast
 
 # INFORMATION
 # put time ( function ) to measure the time taken
-# currently using curl -s -o /dev/null -w "%{http_code}\n" --head $url
 
 set_percentage()
 {
