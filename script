@@ -3,28 +3,27 @@
 clear
 echo -n > log.txt
 
-# VARIABLES
+# VAR
 # lastest=145000
 start=103000
-n=5
+n=100
 let end=start+n
 
-# SLOW BUT READABLE CODE
 slow()
 {
 	for (( i=start; i<=end; i++ ))
 	do
 		url=https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
-		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
+		curl -s -f -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
 	done
 }
 
-# FAST BUT UNREADABLE CODE
+# Num of threads: My pc - 50, 42 pc - 200
 fast()
 {
-	seq $start $end | xargs -P 200 -I {} bash -c '
+	seq $start $end | xargs -P 50 -I {} bash -c '
 		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
-		curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
+		curl -s -f -o /dev/null -w "%{http_code}\n" --head $url >> log.txt
 	'
 }
 
@@ -32,9 +31,7 @@ fast()
 # slow
 fast
 
-# INFORMATION
-# put time ( function ) to measure the time taken
-
+# INFO
 set_percentage()
 {
 	let per=end-i
@@ -45,30 +42,23 @@ set_percentage()
 	let per=per*100
 	let per=per/10000	
 }
-# to show percentage, put this lines in each loop:
+# to show percentage of progress, put this lines inside the loop:
 # set_percentage
 # echo -ne "Getting subject $i, $cur/$n items, $per% Done \r"
 # and this in the end:
 # echo -ne '\n'
 
 # commands to check the existance of pdf on server
-# curl -s -o /dev/null -w "%{http_code}\n" --head $url >> log.txt # 200
-# curl -s -o /dev/null -w "%{http_code}\n" $url >> log.txt # 200
-# curl -s -f --head $url | head -n 1 >> log.txt # HTTP/1.1 200 OK
-# curl -s --head $url | head -n 1 >> log.txt # HTTP/1.1 200 OK
+# CMD='curl -s -f -o /dev/null -w "%{http_code}\n" --head $url'
 # check the output of the executed command
-# if [ "$(COMMAND)" -eq 200 ]; then
+# if [ "$(CMD)" -eq 200 ]; then
 
-# command to download the pdf no matter what
+# command to download the pdf, to have a custom filename use -o
+# curl -O -f -s $url
 # VAR=$i for the slow way, VAR={} for the fast way
-# wget -qO en.subject.pdf.VAR $url # return the pdf not empty
 # check the status code of the executed command and format the name of the pdf
-# Bug: needs check in case of no version
 # if [ $? -eq 0 ]; then
-# 	NAME=$(pdftotext -l 1 en.subject.pdf.VAR - | head -n 1)
-# 	NAME+=.v$(pdftotext -l 1 en.subject.pdf.VAR - | grep 'Version:' | cut -d' ' -f2)
-# 	mv en.subject.pdf.VAR en.subject.pdf.VAR.$NAME
-# 	echo "Recieved subject VAR.$NAME" >> log.txt
+# 	NAME=$(pdftotext -l 1 en.subject.$VAR.pdf - | head -n 1)
+# 	mv en.subject.$VAR.pdf en.subject.$VAR.$NAME.pdf
+# 	echo "Recieved subject $VAR.$NAME" >> log.txt
 # fi
-# after running the command, clean the empty files
-# find . -type f -empty -delete
