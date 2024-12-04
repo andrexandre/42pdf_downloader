@@ -9,12 +9,12 @@
 ## Objetivos
 
 #### Fazer previamente (criação do ficheiro db.txt):
-- Ver a maneira mais rapida de verificar se uma pagina existe
-- Verificar se a pagina existe
-- Fazer o download do pdf existente
-- Atualizar a db.txt com os valores de $NAME $ID
+- Fazer o download dos pdfs com o id no logs.txt
+- Atualizar a db.txt com os valores de $ID $NAME
+
+#### Arranjar maneira de guardar e atualizar um ficheiro na cloud com um api
 
 #### Para o user:
-- Estando o db.txt completo, sacar da cloud
+- Estando o db.txt completo, sacar da cloud para local
 - Executar grep \<projecto> | tail -n 1
-- Executar o script para esse valor
+- Fazer get request com \<antes>\<id>\<depois>
