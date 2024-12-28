@@ -23,10 +23,14 @@ jobs:
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ ! -z "$(git status --porcelain)" }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "Manual update: $(date)"
-          git push origin main
+          if [ ! -z "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "Manual update: $(date)"
+            git push origin main
+          else
+            echo Nothing to commit
+            exit 0
+          fi
