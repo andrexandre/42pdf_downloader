@@ -1,7 +1,8 @@
 
+NAME = 42pdf
+
 all:
-	./script
-	ls
+	./42pdf
 
 e:
 	-rm en.subject*
@@ -9,6 +10,7 @@ e:
 
 re: e all
 
+# fun stuff, to remove later
 PDF = en.subject.pdf
 
 # no version pdf

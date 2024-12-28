@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Manual trigger from the Actions UI
+  workflow_dispatch: # Run the action manually
   # schedule:
   #   - cron: "0 0 1 * *"
 
@@ -13,16 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Make changes to a file
-      - name: Modify db.txt
+      - name: Modify db.txt file
         run: |
-          echo "Manually updated on $(date)" > manual-update.txt
+          echo Supposed database updating
 
-      # Step 3: Commit and push changes
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

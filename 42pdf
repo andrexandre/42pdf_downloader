@@ -1,0 +1,90 @@
+#!/bin/bash
+
+db_name=db.txt
+
+update_log() {
+	updating_started=false
+	if [ ! -f log.txt ]; then
+		open https://github.com/user-attachments/files/17522976/logs.txt
+		echo Moving from ~/Downloads to here
+		sleep 5
+		mv ~/Downloads/logs.txt log.txt
+	fi
+	if [ ! -s $db_name ]; then
+		echo "The database is empty"
+		echo "1560 C Piscine" > $db_name
+		pdf_id=1560
+	else
+		pdf_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
+	fi
+	while IFS= read -r curr_line; do
+		if [[ "$curr_line" == "$pdf_id" ]]; then
+			updating_started=true
+			echo Started updating from $pdf_id
+			continue
+		fi
+		if [ "$updating_started" == true ]; then
+			pdf_id=$(echo $curr_line | awk '{print $1}')
+			url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
+			status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
+
+			if [ "$status_code" -eq 200 ]; then
+				pdf_name=$(curl -s -f --output - $url | pdftotext -l 1 - - | head -n 1)
+				echo "$curr_line $pdf_name" >> $db_name
+			else
+				echo pdf_id: $pdf_id was deleted!
+			fi
+		fi
+	done < log.txt
+	if [ "$updating_started" == false ]; then
+		echo There is nothing to update
+	fi
+}
+
+update_log
+exit
+
+# VAR
+# lastest=145000
+start=1560
+n=3
+let end=start+n
+
+slow()
+{
+	for (( i=start; i<=end; i++ ))
+	do
+		url=https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
+		status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
+		echo $i $status_code >> db.txt
+	done
+}
+
+# Num of threads: My pc - 50, 42 pc - 200
+fast()
+{
+	seq $start $end | xargs -P 50 -I {} bash -c '
+		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
+		curl -s -f -o /dev/null -w "%{http_code}\n" --head $url >> db.txt
+	'
+}
+
+# MAIN
+slow
+# fast
+
+# INFO
+# commands to check the existance of pdf on server
+# CMD=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
+# check the output of the executed command
+# if [ "$(CMD)" -eq 200 ]; then
+
+# command to download the pdf, to have a custom filename use -o
+# curl -O -f -s $url
+# VAR=$i for the slow way, VAR={} for the fast way
+# check the status code of the executed command and format the name of the pdf
+# if [ $? -eq 0 ]; then
+# 	NAME=$(pdftotext -l 1 en.subject.$VAR.pdf - | head -n 1)
+# 	mv en.subject.$VAR.pdf en.subject.$VAR.$NAME.pdf
+# 	echo "Recieved subject $VAR.$NAME" >> log.txt
+# fi
