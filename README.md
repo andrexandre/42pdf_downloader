@@ -1,20 +1,19 @@
-# Missão
-- Possibilidade de retirar os subjects da cloud da 42
-- Quando for preciso so escolher qual subject quer fazer download
-- Mais tarde
-	- Catalogar os subjects em categorias (c and cpp-modules)
-	- Atualização ocasional de novos subjects
-	- Mais tarde ser compativel com todos os tipos de pdfs
+# 42 PDF Downloader
 
-## Objetivos
+This script makes it instant downloading subjects/pdfs from 42
 
-#### Fazer previamente (criação do ficheiro db.txt):
-- Fazer o download dos pdfs com o id no logs.txt
-- Atualizar a db.txt com os valores de $ID $NAME
+It has a database that is actively being updated with the latest subjects
 
-#### Arranjar maneira de guardar e atualizar um ficheiro na cloud com um api
+## Usage
 
-#### Para o user:
-- Estando o db.txt completo, sacar da cloud para local
-- Executar grep \<projecto> | tail -n 1
-- Fazer get request com \<antes>\<id>\<depois>
+Clone the repo and execute [42pdf](https://github.com/andrexandre/42_pdf_downloader/blob/main/42pdf) with the subject you want to download as an argument
+```
+./42pdf inception
+```
+
+## Future Goals
+- ~Ability to download subjects from 42~
+- ~Choose which subject to download~
+- Catalog subjects into categories (e.g., C and C++ modules)
+- Occasional updates with new subjects
+- Compatibility with all types of PDFs
