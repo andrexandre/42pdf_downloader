@@ -20,6 +20,13 @@ jobs:
         run: |
           echo Supposed database updating
 
+      - name: Check for changes
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
