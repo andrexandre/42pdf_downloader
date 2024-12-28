@@ -9,14 +9,8 @@ check_errors() {
 		echo "No internet connection"
 		exit 1
 	fi
-	if [ ! -f $db_name ]; then
-		echo "$db_name does not exist"
-		echo "Clone the repo and execute 42pdf from there"
-		echo "git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_downloader"
-		exit 1
-	fi
-	if [ ! -s $db_name ]; then
-		echo "The database is empty"
+	if [ ! -f $db_name ] || [ ! -s $db_name ]; then
+		echo "$db_name does not exist or is empty"
 		echo "Clone the repo and execute 42pdf from there"
 		echo "git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_downloader"
 		exit 1
@@ -25,15 +19,18 @@ check_errors() {
 		echo "No argument provided. Please provide a search term"
 		exit 1
 	fi
-	return 0
 }
 
 search_and_download() {
+	if [ "$1" == "-u" ] && [ "$1" == "--update" ]; then
+		update_db
+	fi
 	pdf_id=$(grep -i "$1" $db_name | tail -n 1)
 	if [ -z "$pdf_id" ]; then
 		echo "No pdf called $1 found"
 		exit 1
 	fi
+	# parse pdf variables
 	pdf_name=$(echo $pdf_id | cut -d' ' -f2- | tr ' ' '_')
 	pdf_id=$(echo $pdf_id | awk '{print $1}')
 	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
@@ -42,25 +39,15 @@ search_and_download() {
 		echo "Downloaded $pdf_name subject, id: $pdf_id"
 	else
 		echo "Failed to download $pdf_name subject, id: $pdf_id"
+		exit 1
 	fi
-	exit # TO REMOVE LATER
 }
-
-
-if [ "$1" != "-u" ] && [ "$1" != "--update" ]; then
-	check_errors "$1"
-	search_and_download "$1"
-fi
-
-# MAIN code }
 
 update_log() {
 	updating_started=false
-	if [ ! -f log.txt ]; then
-		open https://github.com/user-attachments/files/17522976/logs.txt
-		echo Moving from ~/Downloads to here
-		sleep 5
-		mv ~/Downloads/logs.txt log.txt
+	if [ ! -f old_db.txt ]; then
+		echo there is no old_db.txt
+		exit 1
 	fi
 	pdf_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 	while IFS= read -r curr_line; do
@@ -72,65 +59,63 @@ update_log() {
 		if [ "$updating_started" == true ]; then
 			pdf_id=$(echo $curr_line | awk '{print $1}')
 			url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
+			# commands to check the existance of pdf on server
 			status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
-
 			if [ "$status_code" -eq 200 ]; then
-				pdf_name=$(curl -s -f --output - $url | pdftotext -l 1 - - | head -n 1)
+				pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
 				echo "$curr_line $pdf_name" >> $db_name
-			else
-				echo pdf_id: $pdf_id was deleted! >> errors.txt
 			fi
+			echo "Progress: $pdf_id"
 		fi
-		if (( pdf_id % 1000 == 0 )); then
-			echo "Progress $pdf_id"
-		fi
-	done < log.txt
+	done < old_db.txt
 	if [ "$updating_started" == false ]; then
 		echo There is nothing to update
+	else
+		echo Everything updated successfully
 	fi
 }
 
-update_log
+if [ "$1" != "-u" ] && [ "$1" != "--update" ]; then
+	check_errors "$1"
+	search_and_download "$1"
+else
+	update_log
+fi
+
+# MAIN code }
+exit
 
 # VAR
-# lastest=145000
-start=1560
-n=10000
-let end=start+n
+start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
+pdf_id_range=100
+let end_id=start_id+pdf_id_range
 
-slow()
+update_database_in_order()
 {
-	for (( i=start; i<=end; i++ ))
+	for (( i=start_id; i<=end_id; i++ ))
 	do
 		url=https://cdn.intra.42.fr/pdf/pdf/$i/en.subject.pdf
 		status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
-		echo $i $status_code >> db.txt
+		if [ "$status_code" -eq 200 ]; then
+			pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
+			echo "$i $pdf_name" >> db.txt
+		fi
 	done
 }
 
-# Num of threads: My pc - 50, 42 pc - 200
-fast()
+update_database_real_fast()
 {
-	seq $start $end | xargs -P 50 -I {} bash -c '
+	threads_num=50 # My pc - 50, 42 pc - 200
+	seq $start_id $end_id | xargs -P $threads_num -I {} bash -c '
 		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
-		curl -s -f -o /dev/null -w "%{http_code}\n" --head $url >> db.txt
+		status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
+		if [ "$status_code" -eq 200 ]; then
+			pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
+			echo "{} $pdf_name" >> db.txt
+		fi
 	'
+	sort -n -o db.txt db.txt
 }
 
-# MAIN
-# slow
-# fast
-
-# INFO
-# commands to check the existance of pdf on server
-# status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
-# if [ "$status_code" -eq 200 ]; then
-
-# command to download the pdf
-# curl -O -f -s $url
-# check the status code of the executed command and format the name of the pdf
-# if [ $? -eq 0 ]; then
-# 	pdf_name=$(pdftotext -l 1 en.subject.$pdf_id.pdf - | head -n 1)
-# 	mv en.subject.$pdf_id.pdf en.subject.$pdf_id.$pdf_name.pdf
-# 	echo "Recieved subject $pdf_id.$pdf_name" >> log.txt
-# fi
+# update_database_in_order
+# update_database_real_fast
