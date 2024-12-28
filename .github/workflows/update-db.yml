@@ -1,10 +1,10 @@
 name: Update Database
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch: # Run the action manually
+#   push:
+#     branches:
+#       - main
   # schedule:
   #   - cron: "0 0 1 * *"
 
@@ -20,16 +20,10 @@ jobs:
         run: |
           echo Supposed database updating
 
-      - name: Check for changes
-        run: |
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "No changes to commit"
-            exit 0
-          fi
-
       - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ ! -z "$(git status --porcelain)" }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
