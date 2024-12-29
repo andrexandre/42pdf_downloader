@@ -15,7 +15,7 @@ sort:
 	sort -n -o db.txt db.txt
 
 diff:
-	awk '{print $1}' db.txt > db_new.txt
+	awk '{print $$1}' db.txt > db_new.txt
 # diff db_new.txt log.txt
 
 

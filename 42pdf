@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# MAIN code {
-
 db_name=db.txt
 
 check_errors() {
@@ -43,10 +41,10 @@ search_and_download() {
 	fi
 }
 
-update_log() {
+migrate_database() {
 	updating_started=false
-	if [ ! -f old_db.txt ]; then
-		echo there is no old_db.txt
+	if [ ! -f new_db.txt ]; then
+		echo There is no file new_db.txt
 		exit 1
 	fi
 	pdf_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
@@ -67,28 +65,22 @@ update_log() {
 			fi
 			echo "Progress: $pdf_id"
 		fi
-	done < old_db.txt
+	done < new_db.txt
 	if [ "$updating_started" == false ]; then
-		echo There is nothing to update
+		echo There is nothing to migrate
 	else
-		echo Everything updated successfully
+		echo Everything migrated successfully
 	fi
 }
 
-if [ "$1" != "-u" ] && [ "$1" != "--update" ]; then
-	check_errors "$1"
-	search_and_download "$1"
-else
-	update_log
-fi
-
-# MAIN code }
-exit
-
 # VAR
+# 42 pdf to db ratio: less than 2000 per month
+# batch size should be good at 1000 per run (runs bimonthly)
 start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
-pdf_id_range=100
-let end_id=start_id+pdf_id_range
+# batch size cannot be less than 10 if auto restart is active
+id_batch_size=1000
+let start_id=start_id+1
+let end_id=start_id+id_batch_size
 
 update_database_in_order()
 {
@@ -99,6 +91,8 @@ update_database_in_order()
 		if [ "$status_code" -eq 200 ]; then
 			pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
 			echo "$i $pdf_name" >> db.txt
+			# auto restart
+			# let end_id=i+id_batch_size
 		fi
 	done
 }
@@ -117,5 +111,13 @@ update_database_real_fast()
 	sort -n -o db.txt db.txt
 }
 
-# update_database_in_order
-# update_database_real_fast
+# MAIN
+check_errors "$1"
+if [ "$1" == "-u" ] || [ "$1" == "--update" ]; then
+	update_database_in_order
+	# update_database_real_fast
+elif [ "$2" == "-m" ] || [ "$1" == "--migrate" ]; then
+	migrate_database
+else
+	search_and_download "$1"
+fi
