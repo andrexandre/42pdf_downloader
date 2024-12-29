@@ -4,6 +4,9 @@ db_name=db.txt
 start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 
 check_errors() {
+	if [ "$GITHUB_ACTIONS" = "true" ]; then
+		return 0
+	fi
 	if ! ping -c 1 google.com &> /dev/null; then
 		echo "No internet connection"
 		exit 1
