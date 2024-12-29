@@ -13848,3 +13848,4 @@
 143936 ft_linear_regression
 143937 42sh
 143938 Imersão em GenAI para Desenvolvedores
+143939 Imersão em GenAI para Desenvolvedores
