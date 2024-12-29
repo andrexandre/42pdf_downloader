@@ -11,13 +11,6 @@ e:
 
 re: e all
 
-sort:
-	sort -n -o db.txt db.txt
-
-diff:
-	awk '{print $$1}' db.txt > db_new.txt
-# diff db_new.txt log.txt
-
 
 # fun stuff, to remove later
 PDF = en.subject.pdf

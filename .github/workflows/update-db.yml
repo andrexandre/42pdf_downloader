@@ -2,11 +2,11 @@ name: Update Database
 
 on:
   workflow_dispatch: # Run the action manually
+  schedule:
+    - cron: "0 0 1,15 * *"
 #   push:
 #     branches:
 #       - main
-  # schedule:
-  #   - cron: "0 0 1 * *"
 
 jobs:
   update-files:
@@ -16,14 +16,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # - name: Install poppler-utils and gawk
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y poppler-utils gawk
+      - name: Install poppler-utils (pdftotext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
 
       - name: Modify db.txt file
         run: |
-          ./42pdf -c
+          ./42pdf -u
 
       - name: Commit and Push Changes
         env:
