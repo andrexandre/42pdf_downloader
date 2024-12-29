@@ -1,6 +1,18 @@
 #!/bin/bash
 
+check_dependencies() {
+	dependencies=("ping" "curl" "grep" "xargs" "sort" "tail" "head" "cut" "seq" "tr" "awk" "pdftotext")
+	for cmd in "${dependencies[@]}"; do
+		if ! command -v $cmd &> /dev/null; then
+			echo "Command $cmd does not exist"
+		fi
+	done
+	echo "All dependencies are installed"
+	exit
+}
+
 db_name=db.txt
+start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 
 check_errors() {
 	if ! ping -c 1 google.com &> /dev/null; then
@@ -20,9 +32,6 @@ check_errors() {
 }
 
 search_and_download() {
-	if [ "$1" == "-u" ] && [ "$1" == "--update" ]; then
-		update_db
-	fi
 	pdf_id=$(grep -i "$1" $db_name | tail -n 1)
 	if [ -z "$pdf_id" ]; then
 		echo "No pdf called $1 found"
@@ -42,28 +51,27 @@ search_and_download() {
 }
 
 migrate_database() {
-	updating_started=false
 	if [ ! -f new_db.txt ]; then
 		echo There is no file new_db.txt
 		exit 1
 	fi
-	pdf_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
+	updating_started=false
+	# pdf_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 	while IFS= read -r curr_line; do
-		if [[ "$curr_line" == "$pdf_id" ]]; then
+		if [[ "$curr_line" == "$start_id" ]]; then
 			updating_started=true
-			echo Started updating from $pdf_id
+			echo Started updating from $start_id
 			continue
 		fi
 		if [ "$updating_started" == true ]; then
-			pdf_id=$(echo $curr_line | awk '{print $1}')
-			url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
+			start_id=$(echo $curr_line | awk '{print $1}')
+			url=https://cdn.intra.42.fr/pdf/pdf/$start_id/en.subject.pdf
 			# commands to check the existance of pdf on server
 			status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
 			if [ "$status_code" -eq 200 ]; then
 				pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
 				echo "$curr_line $pdf_name" >> $db_name
 			fi
-			echo "Progress: $pdf_id"
 		fi
 	done < new_db.txt
 	if [ "$updating_started" == false ]; then
@@ -73,10 +81,6 @@ migrate_database() {
 	fi
 }
 
-# VAR
-# 42 pdf to db ratio: less than 2000 per month
-# batch size should be good at 1000 per run (runs bimonthly)
-start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 # batch size cannot be less than 10 if auto restart is active
 id_batch_size=1000
 let start_id=start_id+1
@@ -116,8 +120,10 @@ check_errors "$1"
 if [ "$1" == "-u" ] || [ "$1" == "--update" ]; then
 	update_database_in_order
 	# update_database_real_fast
-elif [ "$2" == "-m" ] || [ "$1" == "--migrate" ]; then
+elif [ "$1" == "-m" ] || [ "$1" == "--migrate" ]; then
 	migrate_database
+elif [ "$1" == "-c" ] || [ "$1" == "--check" ]; then
+	check_dependencies
 else
 	search_and_download "$1"
 fi
