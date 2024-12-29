@@ -10,7 +10,7 @@ check_dependencies() {
 	echo "All dependencies are installed"
 	exit
 }
-
+check_dependencies
 db_name=db.txt
 start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 
