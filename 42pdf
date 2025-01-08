@@ -68,8 +68,8 @@ search_and_download_by_name() {
 }
 
 migrate_database() {
-	if [ ! -f new_db.txt ]; then
-		echo There is no file new_db.txt
+	if [ ! -f new_pdf_db.txt ]; then
+		echo There is no file new_pdf_db.txt
 		return 1
 	fi
 	updating_started=false
@@ -89,7 +89,7 @@ migrate_database() {
 				echo "$curr_line $pdf_name" >> $db_name
 			fi
 		fi
-	done < new_db.txt
+	done < new_pdf_db.txt
 	if [ "$updating_started" == false ]; then
 		echo There is nothing to migrate
 	else
@@ -105,7 +105,7 @@ update_database_in_order() {
 		status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
 		if [ "$status_code" -eq 200 ]; then
 			pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
-			echo "$i $pdf_name" >> db.txt
+			echo "$i $pdf_name" >> pdf_db.txt
 			# auto restart
 			# let end_id=i+id_batch_size
 		fi
@@ -120,11 +120,11 @@ update_database_real_fast() {
 		status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
 		if [ "$status_code" -eq 200 ]; then
 			pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
-			echo "{} $pdf_name" >> db.txt
+			echo "{} $pdf_name" >> pdf_db.txt
 		fi
 	'
 	# $db_name it's not used here so i remeber that it can't be used on xargs
-	sort -n -o db.txt db.txt
+	sort -n -o pdf_db.txt pdf_db.txt
 }
 
 download_by_id() {
@@ -187,7 +187,7 @@ handle_download_args() {
 }
 
 main() {
-	db_name=db.txt
+	db_name=pdf_db.txt
 	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 	# this variables are only needed if --update/migrate is used
 	id_batch_size=1000

@@ -12,7 +12,8 @@ re: rm all
 
 # Notes
 # no version pdf id: 103001
-# inception pdf id: 131848
+# 1 line summary pdf id: 131848
+# normal pdf name: libft
 
 wc:
 	@ls en.subject* | wc -l
