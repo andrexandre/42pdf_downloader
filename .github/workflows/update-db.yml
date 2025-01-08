@@ -1,4 +1,4 @@
-name: Update Database
+name: Update Database bimonthly
 
 on:
   workflow_dispatch: # Run the action manually
@@ -16,14 +16,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Install poppler-utils (pdftotext)
+      - name: Install poppler-utils (pdftotext command)
         run: |
           sudo apt-get update
           sudo apt-get install -y poppler-utils
 
-      - name: Modify db.txt file
+      - name: Update database file
         run: |
-          ./42pdf -u
+          ./42pdf --update
 
       - name: Commit and Push Changes
         env:
