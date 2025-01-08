@@ -1,6 +1,6 @@
 # 42 PDF Downloader
 
-This script makes it instant downloading subjects/pdfs from 42
+This script makes it instant downloading pdfs from 42
 
 It has a database that is actively being updated with the latest subjects
 
@@ -14,6 +14,6 @@ Clone the repo and execute [42pdf](https://github.com/andrexandre/42_pdf_downloa
 ## Future Goals
 - ~Ability to download subjects from 42~
 - ~Choose which subject to download~
+- ~Occasional db update with new pdfs~
 - Catalog subjects into categories (e.g., C and C++ modules)
-- Occasional updates with new subjects
 - Compatibility with all types of PDFs

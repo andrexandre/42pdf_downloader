@@ -1,5 +1,25 @@
 #!/bin/bash
 
+display_help() {
+	cat << EOF
+Usage: ./42pdf NAME/ID [OPTIONS]
+
+Instantly download pdf's from 42
+
+Arguments:
+  NAME/ID     The name or id of the PDF to download
+
+Options:
+  -h, --help     Display this help message
+  -o, --open     Open the PDF in browser
+  -t, --title    Display the PDF title
+  -s, --summary  Display the PDF summary
+  -v, --version  Display the PDF version
+  -p, --page [N] Display content of page N
+EOF
+	exit 0
+}
+
 check_errors() {
 	if [ "$GITHUB_ACTIONS" = "true" ]; then
 		return 0
@@ -14,12 +34,11 @@ check_errors() {
 		echo "git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_downloader"
 		exit 1
 	fi
-	if [ -z "$1" ]; then
-		echo "Usage: ./42pdf NAME/ID [OPTION]"
-		exit 1
+	if [ -z "$1" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+		display_help
 	fi
-	if [ $# -gt 2 ]; then
-		echo "42pdf: too many arguments"
+	if [ $# -gt 3 ]; then
+		echo "Too many arguments"
 		exit 1
 	fi
 }
@@ -36,7 +55,11 @@ search_and_download_by_name() {
 	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
 	curl -sfo $pdf_name.subject.pdf $url
 	if [ $? -eq 0 ]; then
-		echo "Downloaded $pdf_name subject of id: $pdf_id"
+		if [ -n "$2" ]; then
+			handle_download_args "$@"
+		else
+			echo "Downloaded $pdf_name subject of id: $pdf_id"
+		fi
 	else
 		echo "Probably $pdf_name subject of id: $pdf_id no longer exists"
 		echo "Search on intra for $pdf_name to verify if it exists"
@@ -108,15 +131,59 @@ download_by_id() {
 	pdf_id="$1"
 	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
 	curl -sfo temp.subject.pdf $url
-	pdf_name=$(pdftotext -l 1 temp.subject.pdf - | head -n 1 | tr ' ' '_')
-	mv temp.subject.pdf $pdf_name.subject.pdf
 	if [ $? -eq 0 ]; then
-		echo "Downloaded $pdf_name subject of id: $pdf_id"
+		pdf_name=$(pdftotext -l 1 temp.subject.pdf - | head -n 1 | tr ' ' '_')
+		mv temp.subject.pdf $pdf_name.subject.pdf
+		if [ -n "$2" ]; then
+			handle_download_args "$@"
+		else
+			echo "Downloaded $pdf_name subject of id: $pdf_id"
+		fi
 	else
-		echo "Probably $pdf_name subject of id: $pdf_id no longer exists"
-		echo "Search on intra for $pdf_name to verify if it exists"
+		echo "Subject of id: $pdf_id no longer exists"
 		return 1
 	fi
+}
+
+trim_characters() {
+    # Remove leading/trailing whitespace and empty lines
+	sed 's/^[[:space:]]*//;s/[[:space:]]*$//;/^[[:space:]]*$/d' | tr -s '\n'
+}
+handle_download_args() {
+	case "$2" in
+		--open|-o)
+			open $url
+			;;
+		--title|-t)
+			echo $pdf_name
+			;;
+		--summary|-s)
+			if pdftotext -l 1 "$pdf_name.subject.pdf" - | grep -q 'Version:'; then
+				pdftotext -l 1 "$pdf_name.subject.pdf" - | sed -n '/Summary:/,/Version:/ {s/Summary://; /Version:/q; p}' | trim_characters
+			else
+				pdftotext -l 1 "$pdf_name.subject.pdf" - | sed -n '/Summary:/,$ {s/Summary: //; p}' | trim_characters
+			fi
+			;;
+		--version|-v)
+			if pdftotext -l 1 "$pdf_name.subject.pdf" - | grep -q 'Version:'; then
+				pdftotext -l 1 "$pdf_name.subject.pdf" - | grep 'Version:' | cut -d' ' -f2;
+			else
+				echo "This pdf doesn't have version";
+			fi
+			;;
+		--page|-p)
+			if [ -n "$3" ]; then
+				pdftotext -f $3 -l $3 "$pdf_name.subject.pdf" -
+			else
+				pdftotext "$pdf_name.subject.pdf" -
+			fi
+			;;
+		*)
+			echo "Invalid option: $2"
+			echo "try './42pdf --help' for more information"
+			;;
+	esac
+	rm $pdf_name.subject.pdf
 }
 
 main() {
@@ -126,18 +193,18 @@ main() {
 	id_batch_size=1000
 	let start_id=start_id+1
 	let end_id=start_id+id_batch_size
-	
-	# echo ac: $# av: $@
-	# exit
 	if [ "$1" == "--update" ]; then
 		# update_database_in_order
 		update_database_real_fast
 	elif [ "$1" == "--migrate" ]; then
 		migrate_database
+	elif [[ "$1" == -* ]]; then
+		echo "Invalid argument: $1"
+		echo "try './42pdf --help' for more information"
 	elif [[ "$1" =~ ^[0-9]+$ ]]; then
-		download_by_id "$1"
+		download_by_id "$@"
 	else
-		search_and_download_by_name "$1"
+		search_and_download_by_name "$@"
 	fi
 }
 
