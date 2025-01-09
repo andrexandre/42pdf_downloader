@@ -193,26 +193,61 @@ handle_download_args() {
 	rm $pdf_name.subject.pdf
 }
 
+fzf_search() {
+	CMD=fzf
+	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
+	if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+		export PATH="$HOME/.local/bin:$PATH"
+	fi
+	if ! command -v $CMD &> /dev/null; then
+		echo Downloading $CMD...
+		TEMP_DIR=$(mktemp -d)
+		cd $TEMP_DIR
+		apt-get download $CMD > /dev/null
+		dpkg -x $CMD*.deb $TEMP_DIR/$CMD
+		rm $CMD*.deb
+		cp $TEMP_DIR/$CMD/usr/bin/$CMD $HOME/.local/bin
+		rm -rf $TEMP_DIR/$CMD
+		cd - > /dev/null
+		rmdir $TEMP_DIR
+	fi
+	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf)
+	if [ -z "$pdf_name" ]; then
+		return 0
+	else
+		search_and_download_by_name "$pdf_name"
+	fi
+}
+
 main() {
 	db_name=pdf_db.txt
 	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
-	# this variables are only needed if --update/migrate is used
+	# --update/--migrate variables
 	id_batch_size=1000
 	let start_id=start_id+1
 	let end_id=start_id+id_batch_size
-	if [ "$1" == "--update" ]; then
-		# update_database_in_order
-		update_database_real_fast
-	elif [ "$1" == "--migrate" ]; then
-		migrate_database
-	elif [[ "$1" == -* ]]; then
-		echo "Invalid argument: $1"
-		echo "try './42pdf --help' for more information"
-	elif [[ "$1" =~ ^[0-9]+$ ]]; then
-		download_by_id "$@"
-	else
-		search_and_download_by_name "$@"
-	fi
+	case "$1" in
+		-f|--find)
+			fzf_search
+			;;
+		--update)
+			# update_database_in_order
+			update_database_real_fast
+			;;
+		--migrate)
+			migrate_database
+			;;
+		-*)
+			echo "Invalid argument: $1"
+			echo "try './42pdf --help' for more information"
+			;;
+		*[!0-9]*)
+			search_and_download_by_name "$@"
+			;;
+		*)
+			download_by_id "$@"
+			;;
+	esac
 }
 
 check_errors "$@"
