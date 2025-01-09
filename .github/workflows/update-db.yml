@@ -1,9 +1,9 @@
-name: Update Database bimonthly
+name: Weekly Database Update
 
 on:
-  workflow_dispatch: # Run the action manually
+  workflow_dispatch:
   schedule:
-    - cron: "0 0 1,15 * *"
+    - cron: "0 0 * * 1"
 #   push:
 #     branches:
 #       - main

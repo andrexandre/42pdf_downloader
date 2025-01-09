@@ -229,7 +229,7 @@ download_pack() {
 		"common_core")
 			echo "Downloading Common Core pack..."
 			mkdir -p "common_core"
-			for project in "Libft" "printf" "Get Next Line" "Born2beRoot" "minitalk" \
+			for project in "Libft" "ft_printf" "Get Next Line" "Born2beRoot" "minitalk" \
 					"pipex" "push_swap" "fdf" "fract’ol" "So Long" "philosophers" "minishell" \
 					"Net_Practice" "miniRT" "cub3d" "inception" "webserv" "ft_irc" "ft_transcendence"; do
 				search_and_download_by_name "$project"
@@ -277,7 +277,7 @@ download_pack() {
 main() {
 	# --update/--migrate variables
 	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
-	id_batch_size=1000
+	id_batch_size=1000 # cut batch_size to half in need of workflow minutes
 	let start_id=start_id+1
 	let end_id=start_id+id_batch_size
 	case "$1" in
