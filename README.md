@@ -25,6 +25,8 @@ git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_down
 
 - `[OPTION]`: [--help/open/title/summary/version/page]
 
+- `pack`: Shows available packs
+
 ### Examples:
 - Download a PDF by name:
   ```
@@ -42,7 +44,3 @@ git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_down
   ```
   ./42pdf inception -s
   ```
-
-
-> [!IMPORTANT]
-> pdftotext is a dependency

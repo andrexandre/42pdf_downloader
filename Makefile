@@ -5,7 +5,9 @@ all:
 	./$(NAME)
 
 rm:
-	-rm *.subject.pdf
+	-rm -f *.subject.pdf
+	-rm -rf cpp_modules
+	-rm -rf common_core
 	ls
 
 re: rm all
