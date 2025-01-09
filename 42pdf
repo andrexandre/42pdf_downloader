@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# -o, --output   Output the file to a certain path
-
 display_help() {
 	cat << EOF
 Usage: ./42pdf NAME/ID [OPTIONS]
@@ -25,6 +23,8 @@ EOF
 }
 
 check_errors() {
+	SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+	db_name=pdf_db.txt
 	if [ "$GITHUB_ACTIONS" = "true" ]; then
 		return 0
 	fi
@@ -132,7 +132,7 @@ search_and_download_by_name() {
 			echo "Downloaded $pdf_name subject of id: $pdf_id"
 		fi
 	else
-		echo "Probably $pdf_name subject of id: $pdf_id no longer exists"
+		echo "$pdf_name subject of id: $pdf_id isn't available"
 		echo "Search on intra for $pdf_name to verify if it exists"
 		return 1
 	fi
@@ -151,7 +151,7 @@ download_by_id() {
 			echo "Downloaded $pdf_name subject of id: $pdf_id"
 		fi
 	else
-		echo "Subject of id: $pdf_id no longer exists"
+		echo "Subject of id: $pdf_id isn't available"
 		return 1
 	fi
 }
@@ -222,6 +222,7 @@ fzf_search() {
 		search_and_download_by_name "$pdf_name"
 	fi
 }
+
 download_pack() {
 	pack_name="$2"
 	case "$pack_name" in
@@ -252,20 +253,30 @@ download_pack() {
 			search_and_download_by_name "β"
 			search_and_download_by_name "6/2/2023"
 			;;
+		"all_42_pdf")
+			echo "Downloading All 42 subjects pack..."
+			mkdir -p "all_42_pdf"
+			all_subjects=$(cat $db_name | cut -d' ' -f2- | sort | uniq)
+			echo "$all_subjects" | while read -r project; do
+				search_and_download_by_name "$project"
+				mv "$pdf_name.subject.pdf" "all_42_pdf"
+			done
+			;;
 		*)
 			echo "Usage: ./42pdf pack <pack_name>"
 			echo
 			echo "Available packs:"
 			echo "- cpp_modules  : C++ Modules subjects"
 			echo "- common_core  : Common Core subjects"
+			echo "- all_42_pdf   : Almost all 42 subjects (-1gb)"
 			echo "- mysterious   : Hella sus subjects"
 			;;
 	esac
 }
+
 main() {
-	db_name=pdf_db.txt
-	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 	# --update/--migrate variables
+	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
 	id_batch_size=1000
 	let start_id=start_id+1
 	let end_id=start_id+id_batch_size
@@ -298,6 +309,3 @@ main() {
 
 check_errors "$@"
 main "$@"
-
-# cmd to download pack: all (+1gb)
-# cat pdf_db.txt | cut -d' ' -f2- | sort | uniq > uniq_db.txt
