@@ -23,8 +23,8 @@ EOF
 }
 
 check_errors() {
-	SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-	db_name=pdf_db.txt
+	script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+	db_name=$script_dir/pdf_db.txt
 	if [ "$GITHUB_ACTIONS" = "true" ]; then
 		return 0
 	fi
@@ -52,6 +52,9 @@ check_errors() {
 			exit 0
 		fi
 	fi
+	# if [ ! -f "$HOME/.local/bin/42pdf" ]; then
+	# 	ln -s "$(realpath "$0")" "$HOME/.local/bin/42pdf"
+	# fi
 }
 
 migrate_database() {
@@ -200,9 +203,7 @@ handle_download_args() {
 fzf_search() {
 	CMD=fzf
 	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
-	if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-		export PATH="$HOME/.local/bin:$PATH"
-	fi
+	[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
 	if ! command -v $CMD &> /dev/null; then
 		echo Downloading $CMD...
 		TEMP_DIR=$(mktemp -d)
@@ -309,3 +310,5 @@ main() {
 
 check_errors "$@"
 main "$@"
+
+# git clone git@github.com:42Paris/minilibx-linux.git
