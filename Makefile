@@ -4,9 +4,8 @@ all:
 	clear ; ./$(NAME)
 
 rm:
-	-rm -f *.subject.pdf
-	-rm -rf cpp_modules
-	-rm -rf common_core
+	-rm -f *.subject.pdf .subject.pdf
+	-rm -rf cpp_modules common_core all_42_pdf minilibx-linux
 	ls
 
 re: rm all

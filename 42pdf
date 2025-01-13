@@ -7,17 +7,18 @@ Usage: ./42pdf NAME/ID [OPTIONS]
 Instantly download pdf's from 42
 
 Arguments:
- NAME/ID        The name or id of the PDF to download
- --find         Find and download a PDF in the database
- pack           Shows available packs
+ NAME/ID         The name or id of the PDF to download
+ find            Find and download a PDF in the database
+ pack            Shows available packs
 
 Options:
- -h, --help     Display this help message
- -b, --browser  Open the PDF in browser
- -t, --title    Display the PDF title
- -s, --summary  Display the PDF summary
- -v, --version  Display the PDF version
- -p, --page [N] Display content of page N
+ -h, --help      Display this help message
+ -b, --browser   Open the PDF in browser
+ -o, --output P  Download PDF to path P
+ -t, --title     Display the PDF title
+ -s, --summary   Display the PDF summary
+ -v, --version   Display the PDF version
+ -p, --page [N]  Display content of page N
 EOF
 	exit 0
 }
@@ -58,8 +59,13 @@ check_errors() {
 }
 
 migrate_database() {
-	if [ ! -f new_pdf_db.txt ]; then
-		echo There is no file new_pdf_db.txt
+	old_db_name=old_pdf_db.txt
+	if [ ! -f $old_db_name ]; then
+		echo No file $old_db_name found, creating based on $db_name
+		cp $db_name $old_db_name
+		echo "$db_name will be cleaned in 5 seconds"
+		sleep 5
+		echo "1560 C Piscine" > $db_name
 		return 1
 	fi
 	updating_started=false
@@ -79,7 +85,7 @@ migrate_database() {
 				echo "$curr_line $pdf_name" >> $db_name
 			fi
 		fi
-	done < new_pdf_db.txt
+	done < $old_db_name
 	if [ "$updating_started" == false ]; then
 		echo There is nothing to migrate
 	else
@@ -95,14 +101,12 @@ update_database_in_order() {
 		status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
 		if [ "$status_code" -eq 200 ]; then
 			pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
-			echo "$i $pdf_name" >> pdf_db.txt
-			# auto restart
-			# let end_id=i+id_batch_size
+			echo "$i $pdf_name" >> $db_name
 		fi
 	done
 }
 
-update_database_real_fast() {
+update_database() {
 	echo Started updating from $start_id to $end_id
 	threads_num=200
 	seq $start_id $end_id | xargs -P $threads_num -I {} bash -c '
@@ -113,91 +117,143 @@ update_database_real_fast() {
 			echo "{} $pdf_name" >> pdf_db.txt
 		fi
 	'
-	# $db_name it's not used here so i remeber that it can't be used on xargs
-	sort -n -o pdf_db.txt pdf_db.txt
+	sort -n -o $db_name $db_name
 }
 
-search_and_download_by_name() {
-	found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tail -n 1 | awk -F':' '{print $1}')
-	if [ -z "$found_line_index" ]; then
-		echo "No pdf called $1 found"
-		return 1
+create_pdf_id_db_super_fast() {
+	CMD=gobuster
+	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
+	[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
+	if ! command -v $CMD &> /dev/null; then
+		echo Downloading $CMD...
+		TEMP_DIR=$(mktemp -d)
+		cd $TEMP_DIR
+		apt-get download $CMD > /dev/null
+		dpkg -x $CMD*.deb $TEMP_DIR/$CMD
+		rm $CMD*.deb
+		cp $TEMP_DIR/$CMD/usr/bin/$CMD $HOME/.local/bin
+		rm -rf $TEMP_DIR/$CMD
+		cd - > /dev/null
+		rmdir $TEMP_DIR
 	fi
-	# parse pdf variables
-	pdf_id=$(sed -n "${found_line_index}p" $db_name | awk '{print $1}')
-	pdf_name=$(sed -n "${found_line_index}p" $db_name | cut -d' ' -f2- | tr ' ' '-' |  tr '/' '-' | sed 's/--*/-/g')
-	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
-	curl -sfo $pdf_name.subject.pdf $url
-	if [ $? -eq 0 ]; then
-		if [ -n "$2" ]; then
-			handle_download_args "$@"
-		else
-			echo "Downloaded $pdf_name subject of id: $pdf_id"
-		fi
-	else
-		echo "$pdf_name subject of id: $pdf_id isn't available"
-		echo "Search on intra for $pdf_name to verify if it exists"
-		return 1
-	fi
+	# create url list for gobuster
+	list_name=semi_url_db.txt
+	url=/en.subject.pdf
+	echo -n > $list_name
+	for ((i=start_id; i<=end_id; i++)); do
+		echo "$i$url" >> $list_name
+	done
+
+	threads_num=50
+	pdf_id_db_name=pdf_id_db.txt
+	echo Creating pdf_id_db with gobuster
+	gobuster -q -n -u https://cdn.intra.42.fr/pdf/pdf -w $list_name -t $threads_num > $pdf_id_db_name
+
+	rm $list_name
+	sed -i 's/\/en\.subject\.pdf//g' $pdf_id_db_name
+	sed -i 's/\///g' $pdf_id_db_name
+	sort -no $pdf_id_db_name $pdf_id_db_name
+}
+update_database_super_fast() {
+	create_pdf_id_db_super_fast
+
+	echo Started updating from $start_id to $end_id
+	threads_num=200
+	cat $pdf_id_db_name | xargs -P $threads_num -I {} bash -c '
+		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
+		pdf_name=$(curl -s -f -o - $url | pdftotext -l 1 - - | head -n 1)
+		echo "{} $pdf_name" >> pdf_db.txt
+	'
+	rm $pdf_id_db_name
+	sort -n -o $db_name $db_name
 }
 
-download_by_id() {
-	pdf_id="$1"
-	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
-	curl -sfo temp.subject.pdf $url
-	if [ $? -eq 0 ]; then
-		pdf_name=$(pdftotext -l 1 temp.subject.pdf - | head -n 1 | tr ' ' '-' |  tr '/' '-' | sed 's/--*/-/g')
-		mv temp.subject.pdf "$pdf_name.subject.pdf"
-		if [ -n "$2" ]; then
-			handle_download_args "$@"
-		else
-			echo "Downloaded $pdf_name subject of id: $pdf_id"
+verify_pdf() {
+	if ! [[ "$1" =~ ^[0-9]+$ ]]; then
+		found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tail -n 1 | awk -F':' '{print $1}')
+		if [ -z "$found_line_index" ]; then
+			echo "No pdf called $1 found"
+			exit 1
 		fi
+		pdf_id=$(sed -n "${found_line_index}p" $db_name | awk '{print $1}')
+		pdf_name=$(sed -n "${found_line_index}p" $db_name | cut -d' ' -f2- | tr ' ' '-' |  tr '/' '-' | sed 's/--*/-/g')
 	else
+		pdf_id=$1
+	fi
+	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
+	status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
+	if [ "$status_code" -ne 200 ]; then
 		echo "Subject of id: $pdf_id isn't available"
-		return 1
+		exit 1
 	fi
 }
 
-handle_download_args() {
-	trim_characters() {
-		# Remove leading/trailing whitespace and empty lines
-		sed 's/^[[:space:]]*//;s/[[:space:]]*$//;/^[[:space:]]*$/d' | tr -s '\n'
-	}
+download_pdf() {
+	if [ "$2" == "-o" ] || [ "$2" == "--output" ]; then
+		if [ -z "$3" ]; then
+			echo "No path given"
+			echo
+			echo "Usage: ./42pdf NAME/ID -o <target_path>"
+			exit 1
+		fi
+		if [ ! -d "$3" ]; then
+			echo "Invalid path: $3"
+			exit 1
+		fi
+		target_path=$3
+	else
+		target_path=.
+	fi
+	if [ -z "$2" ] || [ "$target_path" != "." ]; then
+		if [[ "$1" =~ ^[0-9]+$ ]]; then
+			# echo Downloaded based on ID
+			curl -sfo temp.subject.pdf $url
+			pdf_name=$(pdftotext -l 1 temp.subject.pdf - | head -n 1 | tr ' ' '-' |  tr '/' '-' | sed 's/--*/-/g')
+			mv temp.subject.pdf $target_path/$pdf_name.subject.pdf
+		else
+			# echo Downloaded based on NAME
+			curl -sfo $target_path/$pdf_name.subject.pdf $url
+		fi
+		echo "Downloaded $pdf_name subject of id: $pdf_id"
+		return 0
+	fi
 	case "$2" in
 		--browser|-b)
 			open $url
 			;;
 		--title|-t)
-			echo $pdf_name
+			curl -sf $url | pdftotext -l 1 - - | head -n 1
 			;;
 		--summary|-s)
-			if pdftotext -l 1 "$pdf_name.subject.pdf" - | grep -q 'Version:'; then
-				pdftotext -l 1 "$pdf_name.subject.pdf" - | sed -n '/Summary:/,/Version:/ {s/Summary://; /Version:/q; p}' | trim_characters
+			# sed 's/.../d' removes leading/trailing whitespace and empty lines
+			if curl -sf $url | pdftotext -l 1 - - | grep -q 'Version:'; then
+				curl -sf $url | pdftotext -l 1 - - | sed -n '/Summary:/,/Version:/ {s/Summary://; /Version:/q; p}'\
+					| sed 's/^[[:space:]]*//;s/[[:space:]]*$//;/^[[:space:]]*$/d' | tr -s '\n'
 			else
-				pdftotext -l 1 "$pdf_name.subject.pdf" - | sed -n '/Summary:/,$ {s/Summary: //; p}' | trim_characters
+				curl -sf $url | pdftotext -l 1 - - | sed -n '/Summary:/,$ {s/Summary: //; p}'\
+					| sed 's/^[[:space:]]*//;s/[[:space:]]*$//;/^[[:space:]]*$/d' | tr -s '\n'
 			fi
 			;;
 		--version|-v)
-			if pdftotext -l 1 "$pdf_name.subject.pdf" - | grep -q 'Version:'; then
-				pdftotext -l 1 "$pdf_name.subject.pdf" - | grep 'Version:' | cut -d' ' -f2;
+			if curl -sf $url | pdftotext -l 1 - - | grep -q 'Version:'; then
+				curl -sf $url | pdftotext -l 1 - - | grep 'Version:' | cut -d' ' -f2;
 			else
 				echo "This pdf doesn't have version";
 			fi
 			;;
 		--page|-p)
 			if [ -n "$3" ]; then
-				pdftotext -f $3 -l $3 "$pdf_name.subject.pdf" -
+				curl -sf $url | pdftotext -f $3 -l $3 - -
 			else
-				pdftotext "$pdf_name.subject.pdf" -
+				curl -sf $url | pdftotext - -
 			fi
 			;;
 		*)
 			echo "Invalid option: $2"
-			echo "try './42pdf --help' for more information"
+			display_help
+			exit 1
 			;;
 	esac
-	rm $pdf_name.subject.pdf
 }
 
 fzf_search() {
@@ -220,7 +276,7 @@ fzf_search() {
 	if [ -z "$pdf_name" ]; then
 		return 0
 	else
-		search_and_download_by_name "$pdf_name"
+		search_and_download_by_name "$pdf_name" "$2"
 	fi
 }
 
@@ -263,52 +319,50 @@ download_pack() {
 				mv "$pdf_name.subject.pdf" "all_42_pdf"
 			done
 			;;
+		"mlx")
+			git clone git@github.com:42Paris/minilibx-linux.git
+			;;
 		*)
 			echo "Usage: ./42pdf pack <pack_name>"
 			echo
 			echo "Available packs:"
 			echo "- cpp_modules  : C++ Modules subjects"
 			echo "- common_core  : Common Core subjects"
-			echo "- all_42_pdf   : Almost all 42 subjects (-1gb)"
+			echo "- all_42_pdf   : Almost all 42 subjects (-1gb)" minilibx
 			echo "- mysterious   : Hella sus subjects"
+			echo "- mlx          : MinilibX graphics library"
 			;;
 	esac
 }
 
 main() {
-	# --update/--migrate variables
+	# update/migrate variables
 	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
-	id_batch_size=1000 # cut batch_size to half in need of workflow minutes
+	id_batch_size=100
 	let start_id=start_id+1
 	let end_id=start_id+id_batch_size
 	case "$1" in
-		-f|--find)
-			fzf_search
+		update)
+			update_database
 			;;
-		--update)
-			# update_database_in_order
-			update_database_real_fast
+		update-fast)
+			update_database_super_fast
 			;;
-		--migrate)
+		migrate)
 			migrate_database
 			;;
-		-*)
-			echo "Invalid argument: $1"
-			echo "try './42pdf --help' for more information"
+		find)
+			fzf_search "$@"
 			;;
 		pack)
 			download_pack "$@"
 			;;
-		*[!0-9]*)
-			search_and_download_by_name "$@"
-			;;
 		*)
-			download_by_id "$@"
+			verify_pdf "$@"
+			download_pdf "$@"
 			;;
 	esac
 }
 
 check_errors "$@"
 main "$@"
-
-# git clone git@github.com:42Paris/minilibx-linux.git
