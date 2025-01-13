@@ -36,10 +36,18 @@ check_errors() {
 	if [ -z "$1" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 		display_help
 	fi
-	if [ ! -f $db_name ] || [ ! -s $db_name ]; then
-		echo "$db_name does not exist or is empty"
-		echo "Clone the repo and execute 42pdf from there"
-		echo "git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_downloader"
+	if git status | grep -q "Your branch is behind"; then
+		echo "Updates avaliable, updating..."
+		if ! git diff-index --quiet HEAD --; then
+			echo "Restore the changes in the following repo to update"
+			echo "$script_dir"
+		else
+			cd $script_dir ; git pull ; cd -
+		fi
+	fi
+	if git ls-files --deleted | read -r; then
+		echo "Restore the deleted files in the following repo for the script to run"
+		echo "$script_dir"
 		exit 1
 	fi
 	if ! timeout 3 ping -c 1 google.com &> /dev/null; then
@@ -168,9 +176,114 @@ update_database_super_fast() {
 	sort -n -o $db_name $db_name
 }
 
+fzf_search() {
+	CMD=fzf
+	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
+	[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
+	if ! command -v $CMD &> /dev/null; then
+		echo Downloading $CMD...
+		TEMP_DIR=$(mktemp -d)
+		cd $TEMP_DIR
+		apt-get download $CMD > /dev/null
+		dpkg -x $CMD*.deb $TEMP_DIR/$CMD
+		rm $CMD*.deb
+		cp $TEMP_DIR/$CMD/usr/bin/$CMD $HOME/.local/bin
+		rm -rf $TEMP_DIR/$CMD
+		cd - > /dev/null
+		rmdir $TEMP_DIR
+	fi
+	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf)
+	if [ -z "$pdf_name" ]; then
+		return 0
+	else
+		search_and_download_by_name "$pdf_name" "$2"
+	fi
+}
+
+download_pdf_entry() {
+	for curr in $(seq -w 00 $3); do
+		i=0
+		while [ "$entry" != "$2$curr" ]; do
+			let i=i+1
+			line=$(download_pdf "$1" "-e" "$i")
+			entry=$(echo $line | cut -d' ' -f2-)
+			# echo Returned $1 $line
+		done
+		download_pdf "$(echo $line | awk '{print $1}')"
+		entry=$(echo $entry | tr ' ' '-' |  tr '/' '-' | sed 's/--*/-/g')
+		mv "$pdf_name.subject.pdf" "c_piscine/$pdf_name.$entry.subject.pdf"
+	done
+}
+download_pack() {
+	pack_name="$2"
+	case "$pack_name" in
+		"c_piscine")
+			echo "This is not optimized so it may take a long time"
+			echo "Downloading C piscine pack..."
+			mkdir -p "c_piscine"
+			download_pdf_entry "C Piscine" "Shell " "01"
+			download_pdf_entry "C Piscine" "Rush " "02"
+			download_pdf_entry "C Piscine" "C " "13"
+			;;
+		"common_core")
+			echo "Downloading Common Core pack..."
+			mkdir -p "common_core"
+			for project in "Libft" "ft_printf" "Get Next Line" "Born2beRoot" "minitalk" \
+					"pipex" "push_swap" "fdf" "fract’ol" "So Long" "philosophers" "minishell" \
+					"Net_Practice" "miniRT" "cub3d" "inception" "webserv" "ft_irc" "ft_transcendence"; do
+				download_pdf "$project"
+				mv "$pdf_name.subject.pdf" "common_core"
+			done
+			;&
+		"cpp_modules")
+			echo "Downloading C++ Modules pack..."
+			mkdir -p "cpp_modules"
+			for i in {00..09}; do
+				download_pdf "C++ - Module $i"
+				mv "$pdf_name.subject.pdf" "cpp_modules"
+			done
+			if [ "$pack_name" == "common_core" ]; then
+				mv "cpp_modules" "common_core"
+			fi
+			;;
+		"mysterious")
+			echo "Downloading Mysterious pack..."
+			download_pdf "???"
+			download_pdf "β"
+			download_pdf "6/2/2023"
+			;;
+		"all_42_pdf")
+			echo "Downloading All 42 subjects pack..."
+			mkdir -p "all_42_pdf"
+			all_subjects=$(cat $db_name | cut -d' ' -f2- | sort | uniq)
+			echo "$all_subjects" | while read -r project; do
+				download_pdf "$project"
+				mv "$pdf_name.subject.pdf" "all_42_pdf"
+			done
+			;;
+		"mlx")
+			git clone git@github.com:42Paris/minilibx-linux.git
+			;;
+		*)
+			echo "Usage: ./42pdf pack <pack_name>"
+			echo
+			echo "Available packs:"
+			echo "- cpp_modules  : C++ Modules subjects"
+			echo "- common_core  : Common Core subjects"
+			echo "- all_42_pdf   : Almost all 42 subjects (-1gb)" minilibx
+			echo "- mysterious   : Hella sus subjects"
+			echo "- mlx          : MinilibX graphics library"
+			;;
+	esac
+}
+
 verify_pdf() {
 	if ! [[ "$1" =~ ^[0-9]+$ ]]; then
-		found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tail -n 1 | awk -F':' '{print $1}')
+		if [ "$2" == "-e" ] && [ -n "$3" ]; then
+			found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tac | sed -n "$3p" | awk -F':' '{print $1}')
+		else
+			found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tail -n 1 | awk -F':' '{print $1}')
+		fi
 		if [ -z "$found_line_index" ]; then
 			echo "No pdf called $1 found"
 			exit 1
@@ -189,6 +302,7 @@ verify_pdf() {
 }
 
 download_pdf() {
+	verify_pdf "$@"
 	if [ "$2" == "-o" ] || [ "$2" == "--output" ]; then
 		if [ -z "$3" ]; then
 			echo "No path given"
@@ -217,6 +331,9 @@ download_pdf() {
 		echo "Downloaded $pdf_name subject of id: $pdf_id"
 		return 0
 	fi
+	handle_arguments "$@"
+}
+handle_arguments() {
 	case "$2" in
 		--browser|-b)
 			open $url
@@ -242,11 +359,17 @@ download_pdf() {
 			fi
 			;;
 		--page|-p)
-			if [ -n "$3" ]; then
-				curl -sf $url | pdftotext -f $3 -l $3 - -
-			else
+			if [ -z "$3" ]; then
 				curl -sf $url | pdftotext - -
+			else
+				curl -sf $url | pdftotext -f $3 -l $3 - -
 			fi
+			;;
+		--entry|-e)
+			# echo "Returns the -eTH entry for a pdf name"
+			# echo "Usage: ./42pdf NAME/ID -e <entry>"
+			echo -n "$pdf_id "
+			curl -sf $url | pdftotext -l 1 - - | sed -n "2p"
 			;;
 		*)
 			echo "Invalid option: $2"
@@ -256,100 +379,22 @@ download_pdf() {
 	esac
 }
 
-fzf_search() {
-	CMD=fzf
-	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
-	[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
-	if ! command -v $CMD &> /dev/null; then
-		echo Downloading $CMD...
-		TEMP_DIR=$(mktemp -d)
-		cd $TEMP_DIR
-		apt-get download $CMD > /dev/null
-		dpkg -x $CMD*.deb $TEMP_DIR/$CMD
-		rm $CMD*.deb
-		cp $TEMP_DIR/$CMD/usr/bin/$CMD $HOME/.local/bin
-		rm -rf $TEMP_DIR/$CMD
-		cd - > /dev/null
-		rmdir $TEMP_DIR
-	fi
-	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf)
-	if [ -z "$pdf_name" ]; then
-		return 0
-	else
-		search_and_download_by_name "$pdf_name" "$2"
-	fi
-}
-
-download_pack() {
-	pack_name="$2"
-	case "$pack_name" in
-		"common_core")
-			echo "Downloading Common Core pack..."
-			mkdir -p "common_core"
-			for project in "Libft" "ft_printf" "Get Next Line" "Born2beRoot" "minitalk" \
-					"pipex" "push_swap" "fdf" "fract’ol" "So Long" "philosophers" "minishell" \
-					"Net_Practice" "miniRT" "cub3d" "inception" "webserv" "ft_irc" "ft_transcendence"; do
-				search_and_download_by_name "$project"
-				mv "$pdf_name.subject.pdf" "common_core"
-			done
-			;&
-		"cpp_modules")
-			echo "Downloading C++ Modules pack..."
-			mkdir -p "cpp_modules"
-			for i in {00..09}; do
-				search_and_download_by_name "C++ - Module $i"
-				mv "$pdf_name.subject.pdf" "cpp_modules"
-			done
-			if [ "$pack_name" == "common_core" ]; then
-				mv "cpp_modules" "common_core"
-			fi
-			;;
-		"mysterious")
-			echo "Downloading Mysterious pack..."
-			search_and_download_by_name "???"
-			search_and_download_by_name "β"
-			search_and_download_by_name "6/2/2023"
-			;;
-		"all_42_pdf")
-			echo "Downloading All 42 subjects pack..."
-			mkdir -p "all_42_pdf"
-			all_subjects=$(cat $db_name | cut -d' ' -f2- | sort | uniq)
-			echo "$all_subjects" | while read -r project; do
-				search_and_download_by_name "$project"
-				mv "$pdf_name.subject.pdf" "all_42_pdf"
-			done
-			;;
-		"mlx")
-			git clone git@github.com:42Paris/minilibx-linux.git
-			;;
-		*)
-			echo "Usage: ./42pdf pack <pack_name>"
-			echo
-			echo "Available packs:"
-			echo "- cpp_modules  : C++ Modules subjects"
-			echo "- common_core  : Common Core subjects"
-			echo "- all_42_pdf   : Almost all 42 subjects (-1gb)" minilibx
-			echo "- mysterious   : Hella sus subjects"
-			echo "- mlx          : MinilibX graphics library"
-			;;
-	esac
-}
-
 main() {
 	# update/migrate variables
 	start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
-	id_batch_size=100
+	id_batch_size=1000
 	let start_id=start_id+1
 	let end_id=start_id+id_batch_size
 	case "$1" in
+		# database changing functions
+		migrate)
+			migrate_database
+			;;
 		update)
 			update_database
 			;;
 		update-fast)
 			update_database_super_fast
-			;;
-		migrate)
-			migrate_database
 			;;
 		find)
 			fzf_search "$@"
@@ -358,7 +403,6 @@ main() {
 			download_pack "$@"
 			;;
 		*)
-			verify_pdf "$@"
 			download_pdf "$@"
 			;;
 	esac

@@ -23,7 +23,7 @@ jobs:
 
       - name: Update database file
         run: |
-          ./42pdf --update
+          ./42pdf update
 
       - name: Commit and Push Changes
         env:

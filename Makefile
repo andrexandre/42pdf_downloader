@@ -5,7 +5,7 @@ all:
 
 rm:
 	-rm -f *.subject.pdf .subject.pdf
-	-rm -rf cpp_modules common_core all_42_pdf minilibx-linux
+	-rm -rf c_piscine cpp_modules common_core all_42_pdf minilibx-linux
 	ls
 
 re: rm all
