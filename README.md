@@ -8,7 +8,7 @@ It has a database that is actively being updated with the latest subjects
 - ~Ability to download subjects from 42~
 - ~Choose which subject to download~
 - ~Occasional db update with new pdfs~
-- Make pdf packs (e.g., C piscine, C++ modules, 42_common_core, etc...)
+- ~Make pdf packs (e.g., C piscine, C++ modules, 42_common_core, etc...)~
 - Compatibility with all types of PDFs
 
 ## Usage
@@ -23,14 +23,16 @@ git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_down
 
 - `NAME/ID`: The name or id of the PDF to download
 
-- `[OPTION]`: [--help/open/title/summary/version/page]
+- `[OPTION]`: [--help/browser/output/title/summary/version/page]
+
+- `find`: Searches for a pdf in the database
 
 - `pack`: Shows available packs
 
 ### Examples:
 - Download a PDF by name:
   ```
-  ./42pdf inception
+  ./42pdf so_long
   ```
 - Download a PDF by ID:
   ```
@@ -38,9 +40,13 @@ git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_down
   ```
 - Quickly open the PDF in the browser:
   ```
-  ./42pdf inception -o
+  ./42pdf ft_irc -b
   ```
 - Display the summary of the PDF:
   ```
   ./42pdf inception -s
+  ```
+- Download PDF to target path:
+  ```
+  ./42pdf 1560 -o ~/Documents
   ```
