@@ -15310,3 +15310,21 @@
 147953 C++ - Module 07
 147954 C++ - Module 08
 147958 C++ - Module 09
+147960 Cybersecurity Discovery Piscine
+147962 Minishell
+147966 Cybersecurity Discovery Piscine
+147968 Cybersecurity Discovery Piscine
+147970 Cybersecurity Discovery Piscine
+147972 C Piscine
+147982 C Piscine
+147992 C Piscine
+148001 C Piscine
+148010 C Piscine
+148030 C Piscine
+148040 libftpp
+148041 Minitalk
+148045 ft_ping
+148046 Cloud-1
+148053 C Piscine’s final Project
+148065 Libft
+148075 Minitalk
