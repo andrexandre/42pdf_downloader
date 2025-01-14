@@ -4,13 +4,6 @@ This script makes it instant downloading pdfs from 42
 
 It has a database that is actively being updated with the latest subjects
 
-## Goals
-- ~Ability to download subjects from 42~
-- ~Choose which subject to download~
-- ~Occasional db update with new pdfs~
-- ~Make pdf packs (e.g., C piscine, C++ modules, 42_common_core, etc...)~
-- Compatibility with all types of PDFs
-
 ## Usage
 
 Clone the repo and execute [42pdf](https://github.com/andrexandre/42_pdf_downloader/blob/main/42pdf) with the subject you want to download as an argument
@@ -32,7 +25,7 @@ git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_down
 ### Examples:
 - Download a PDF by name:
   ```
-  ./42pdf so_long
+  ./42pdf 'so long'
   ```
 - Download a PDF by ID:
   ```
@@ -50,3 +43,7 @@ git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_down
   ```
   ./42pdf 1560 -o ~/Documents
   ```
+
+> [!IMPORTANT]
+> There are certain subjects that changed the name, so you may download the old version accidentally\
+> Example: SoLong -> So Long and IRC -> ft_irc
