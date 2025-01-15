@@ -47,6 +47,7 @@ check_errors() {
 		if git status | grep -q "Your branch is behind"; then
 			echo "Updates avaliable, updating..."
 			git pull
+			echo
 		fi
 		cd - > /dev/null
 	else
