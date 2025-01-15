@@ -254,7 +254,7 @@ setup_42pdf() {
 	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=n
 	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=n
 
-	[ "$shell_setup" ] && echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc
+	[ "$shell_setup" ] && (echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc ; . $shellrc)
 	[ "$ln_setup" ] && ln -s "$(realpath "$0")" "$HOME/.local/bin/42pdf"
 	[ "$fol_setup" ] && mv $script_dir $HOME/.config
 
