@@ -259,6 +259,7 @@ setup_42pdf() {
 	[ "$fol_setup" ] && mv $script_dir $HOME/.config
 
 	if [ "$ln_setup" ] && [ "$fol_setup" ]; then
+		echo
 		echo 42pdf_downloader setup successfully!
 		echo
 		display_help
