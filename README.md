@@ -8,7 +8,7 @@ It has a database that is actively being updated with the latest subjects
 
 Clone the repo and execute [42pdf](https://github.com/andrexandre/42pdf_downloader/blob/main/42pdf) right away or setup so you can use it anywhere:
 ```bash
-git clone https://github.com/andrexandre/42pdf_downloader.git && ./42pdf_downloader/42pdf setup
+git clone https://github.com/andrexandre/42pdf_downloader.git ; ./42pdf_downloader/42pdf setup
 ```
 
 ### Arguments and Options:
