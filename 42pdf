@@ -20,15 +20,16 @@ Options:
  -v, --version   Display the PDF version
  -p, --page [N]  Display content of page N
 EOF
-	exit 0
+	exit
 }
 
 check_errors() {
 	script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 	db_name=$script_dir/pdf_db.txt
-	if [ "$GITHUB_ACTIONS" = "true" ]; then
-		return 0
-	fi
+	[ "$GITHUB_ACTIONS" = "true" ] && return
+	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
+	[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
+
 	if [ $# -gt 3 ]; then
 		echo "Too many arguments"
 		exit 1
@@ -36,32 +37,27 @@ check_errors() {
 	if [ -z "$1" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 		display_help
 	fi
-	if cd $script_dir ; git status | grep -q "Your branch is behind"; then
-		echo "Updates avaliable, updating..."
-		if ! git diff-index --quiet HEAD -- $script_dir; then
-			echo "Restore the changes in the following repo to update"
-			echo "$script_dir"
-			echo
-		else
+	if [ -z "$DEBUG" ]; then
+		cd $script_dir
+		if [ "$(git status --porcelain)" ]; then
+			echo "Changes exist, restoring all in 5 sec..."
+			sleep 5
+			git restore .
+		fi
+		if git status | grep -q "Your branch is behind"; then
+			echo "Updates avaliable, updating..."
 			git pull
 		fi
+		cd - > /dev/null
+	else
+		unset DEBUG
 	fi
-	if git ls-files --deleted $script_dir | read -r; then
-		echo "Restore the deleted files in the following repo for the script to run"
-		echo "$script_dir"
-		exit 1
-	fi
-	cd - > /dev/null
 	if ! timeout 3 ping -c 1 google.com &> /dev/null; then
 		echo "Bad internet connection"
 		exit 1
 	fi
 	if ! command -v pdftotext &> /dev/null; then
-		echo "pdftotext is required but not installed. Do you want to install it now? (Ctrl+C to exit)"
-		sudo apt-get update && sudo apt-get install -y poppler-utils
-		if [ $? -eq 1 ]; then
-			exit 0
-		fi
+		export list="install_command poppler-utils" ; curl -sL andrexandre.github.io | sh
 	fi
 	# if [ ! -f "$HOME/.local/bin/42pdf" ]; then
 	# 	ln -s "$(realpath "$0")" "$HOME/.local/bin/42pdf"
@@ -69,27 +65,12 @@ check_errors() {
 }
 
 fzf_search() {
-	CMD=fzf
-	[ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin"
-	[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
-	if ! command -v $CMD &> /dev/null; then
-		echo Downloading $CMD...
-		TEMP_DIR=$(mktemp -d)
-		cd $TEMP_DIR
-		apt-get download $CMD > /dev/null
-		dpkg -x $CMD*.deb $TEMP_DIR/$CMD
-		rm $CMD*.deb
-		cp $TEMP_DIR/$CMD/usr/bin/$CMD $HOME/.local/bin
-		rm -rf $TEMP_DIR/$CMD
-		cd - > /dev/null
-		rmdir $TEMP_DIR
+	if ! command -v fzf &> /dev/null; then
+		export list="install_command fzf" ; curl -sL andrexandre.github.io | sh
 	fi
 	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf)
-	if [ -z "$pdf_name" ]; then
-		return 0
-	else
-		download_pdf "$pdf_name" "$2"
-	fi
+	[ -z "$pdf_name" ] && return
+	download_pdf "$pdf_name" "$2"
 }
 
 download_pdf_entry() {
@@ -171,7 +152,7 @@ download_pack() {
 
 verify_pdf() {
 	if ! [[ "$1" =~ ^[0-9]+$ ]]; then
-		if [ "$2" == "-e" ] && [ -n "$3" ]; then
+		if [ "$2" == "-e" ] && [ "$3" ]; then
 			found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tac | sed -n "$3p" | awk -F':' '{print $1}')
 		else
 			found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tail -n 1 | awk -F':' '{print $1}')
@@ -186,7 +167,7 @@ verify_pdf() {
 		pdf_id=$1
 	fi
 	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
-	status_code=$(curl -s -f -o /dev/null -w "%{http_code}\n" --head $url)
+	status_code=$(curl -sfo /dev/null -w "%{http_code}\n" --head $url)
 	if [ "$status_code" -ne 200 ]; then
 		echo "Subject of id: $pdf_id isn't available"
 		exit 1
@@ -220,7 +201,7 @@ download_pdf() {
 			curl -sfo $target_path/$pdf_name.subject.pdf $url
 		fi
 		echo "Downloaded $pdf_name subject of id: $pdf_id"
-		return 0
+		return
 	fi
 	handle_arguments "$@"
 }
