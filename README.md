@@ -8,7 +8,7 @@ It has a database that is actively being updated with the latest subjects
 
 Clone the repo and execute [42pdf](https://github.com/andrexandre/42_pdf_downloader/blob/main/42pdf) with the subject you want to download as an argument
 ```
-git clone https://github.com/andrexandre/42_pdf_downloader.git && cd 42_pdf_downloader && ./42pdf
+git clone https://github.com/andrexandre/42pdf_downloader.git && cd 42pdf_downloader && ./42pdf
 ```
 
 ### Arguments and Options:
