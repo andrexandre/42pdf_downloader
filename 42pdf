@@ -250,15 +250,15 @@ handle_arguments() {
 
 setup_42pdf() {
 	shellrc=$HOME/."$(basename "$SHELL")"rc
-	grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc || shell_setup=n
+	grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc || \
+	echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc
+
 	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=n
 	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=n
-
-	[ "$shell_setup" ] && (echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc)
 	[ "$ln_setup" ] && ln -s "$HOME/.config/42pdf_downloader/42pdf" "$HOME/.local/bin/42pdf"
 	[ "$fol_setup" ] && mv $script_dir $HOME/.config
 
-	if [ "$shell_setup" ] && [ "$ln_setup" ] && [ "$fol_setup" ]; then
+	if [ "$ln_setup" ] && [ "$fol_setup" ]; then
 		echo 42pdf_downloader setup successfully!
 		echo
 		display_help
