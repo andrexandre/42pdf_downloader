@@ -250,7 +250,7 @@ handle_arguments() {
 
 setup_42pdf() {
 	shellrc=$HOME/."$(basename "$SHELL")"rc
-	[ ! $(grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc) ] && shell_setup=n
+	grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc || shell_setup=n
 	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=n
 	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=n
 
@@ -259,7 +259,7 @@ setup_42pdf() {
 	[ "$fol_setup" ] && mv $script_dir $HOME/.config
 
 	if [ "$shell_setup" ] && [ "$ln_setup" ] && [ "$fol_setup" ]; then
-		echo 42pdf_downloader setup successful!
+		echo 42pdf_downloader setup successfully!
 		echo
 		display_help
 	else
@@ -267,7 +267,7 @@ setup_42pdf() {
 		if [[ "$choice" == [Yy]* ]]; then
 			rm -f "$HOME/.local/bin/42pdf"
 			rm -rf "$HOME/.config/42pdf_downloader"
-			echo "42pdf_downloader removal successful!"
+			echo "42pdf_downloader removed successfully!"
 		fi
 	fi
 }
