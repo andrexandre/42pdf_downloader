@@ -59,9 +59,6 @@ check_errors() {
 	if ! command -v pdftotext &> /dev/null; then
 		export list="install_command poppler-utils" ; curl -sL andrexandre.github.io | sh
 	fi
-	# if [ ! -f "$HOME/.local/bin/42pdf" ]; then
-	# 	ln -s "$(realpath "$0")" "$HOME/.local/bin/42pdf"
-	# fi
 }
 
 fzf_search() {
@@ -251,6 +248,30 @@ handle_arguments() {
 	esac
 }
 
+setup_42pdf() {
+	shellrc=$HOME/."$(basename "$SHELL")"rc
+	[ ! $(grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc) ] && shell_setup=n
+	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=n
+	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=n
+
+	[ "$shell_setup" ] && echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc
+	[ "$ln_setup" ] && ln -s "$(realpath "$0")" "$HOME/.local/bin/42pdf"
+	[ "$fol_setup" ] && mv $script_dir $HOME/.config
+
+	if [ "$shell_setup" ] && [ "$ln_setup" ] && [ "$fol_setup" ]; then
+		echo 42pdf_downloader setup successful!
+		echo
+		display_help
+	else
+		read -p "Do you want to remove 42pdf_downloader? (y/N): " choice
+		if [[ "$choice" == [Yy]* ]]; then
+			rm -f "$HOME/.local/bin/42pdf"
+			rm -rf "$HOME/.config/42pdf_downloader"
+			echo "42pdf_downloader removal successful!"
+		fi
+	fi
+}
+
 main() {
 	case "$1" in
 		# db_utils.sh functions
@@ -268,6 +289,9 @@ main() {
 			echo Removed all *.subject.pdf
 			rm -f *.subject.pdf .subject.pdf
 			# rm -rf c_piscine cpp_modules common_core all_42_pdf minilibx-linux
+			;;
+		setup)
+			setup_42pdf
 			;;
 		find)
 			fzf_search "$@"
