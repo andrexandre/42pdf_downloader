@@ -28,3 +28,6 @@ def subject_dowloader():
 
 subject_dowloader()
 #teste
+
+# https://raw.githubusercontent.com/andrexandre/42pdf_downloader/refs/heads/main/pdf_db.txt
+# verificar se  o ficheiro 	existe se nao existeir baixar da cloud
