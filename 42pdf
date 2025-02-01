@@ -247,9 +247,11 @@ handle_arguments() {
 
 setup_42pdf() {
 	shellrc=$HOME/."$(basename "$SHELL")"rc
-	grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc || \
-	echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc
-
+	# include ~/.local/bin in PATH
+	if ! grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc; then
+		echo '# include ~/.local/bin in PATH' >> $shellrc
+		echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc
+	fi
 	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=n
 	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=n
 	[ "$ln_setup" ] && ln -s "$HOME/.config/42pdf_downloader/42pdf" "$HOME/.local/bin/42pdf"
