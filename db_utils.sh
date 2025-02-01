@@ -37,7 +37,7 @@ update_database_in_order() {
 create_pdf_id_db_super_fast() {
 	echo sh*t\'s so fast that you need a gigabit connection to run, ok? starting in 5 sec...
 	if ! command -v gobuster &> /dev/null; then
-		export list="install_command gobuster" ; curl -sL andrexandre.github.io | sh
+		export list="install_cmd_rootless gobuster" ; curl -sL andrexandre.github.io | sh
 	fi
 	sleep 5
 	cd $script_dir

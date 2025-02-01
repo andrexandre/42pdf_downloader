@@ -55,13 +55,13 @@ check_errors() {
 		exit 1
 	fi
 	if ! command -v pdftotext &> /dev/null; then
-		export list="install_command poppler-utils" ; curl -sL andrexandre.github.io | sh
+		export list="install_cmd_rootless poppler-utils" ; curl -sL andrexandre.github.io | sh
 	fi
 }
 
 fzf_search() {
 	if ! command -v fzf &> /dev/null; then
-		export list="install_command fzf" ; curl -sL andrexandre.github.io | sh
+		export list="install_cmd_rootless fzf" ; curl -sL andrexandre.github.io | sh
 	fi
 	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf)
 	[ -z "$pdf_name" ] && return
@@ -268,6 +268,8 @@ setup_42pdf() {
 			rm -f "$HOME/.local/bin/42pdf"
 			rm -rf "$HOME/.config/42pdf_downloader"
 			echo "42pdf_downloader removed successfully!"
+			echo "To set up 42pdf again run:"
+			echo "git clone https://github.com/andrexandre/42pdf_downloader.git ; 42pdf_downloader/42pdf setup"
 		fi
 	fi
 }
