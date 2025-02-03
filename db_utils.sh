@@ -85,12 +85,12 @@ migrate_database() {
 	fi
 	updating_started=false
 	while IFS= read -r curr_line; do
-		if [[ "$curr_line" == "$start_id" ]]; then
+		if [ "$curr_line" = "$start_id" ]; then
 			updating_started=true
 			echo Started migration from $start_id
 			continue
 		fi
-		if [ "$updating_started" == true ]; then
+		if [ "$updating_started" = true ]; then
 			start_id=$(echo $curr_line | awk '{print $1}')
 			url=https://cdn.intra.42.fr/pdf/pdf/$start_id/en.subject.pdf
 			status_code=$(curl -sfo /dev/null -w "%{http_code}\n" --head $url)
@@ -100,7 +100,7 @@ migrate_database() {
 			fi
 		fi
 	done < $old_db_name
-	if [ "$updating_started" == false ]; then
+	if [ "$updating_started" = false ]; then
 		echo There is nothing to migrate
 	else
 		echo Everything migrated successfully

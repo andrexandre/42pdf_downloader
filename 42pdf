@@ -31,7 +31,7 @@ check_errors() {
 		echo "Too many arguments"
 		exit 1
 	fi
-	if [ -z "$1" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+	if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		display_help ; exit
 	fi
 	if [ -z "$DEBUG" ]; then
@@ -110,7 +110,7 @@ download_pack() {
 				download_pdf "C++ - Module $i"
 				mv "$pdf_name.subject.pdf" "cpp_modules"
 			done
-			if [ "$pack_name" == "common_core" ]; then
+			if [ "$pack_name" = "common_core" ]; then
 				mv "cpp_modules" "common_core"
 			fi
 			;;
@@ -147,7 +147,7 @@ download_pack() {
 
 verify_pdf() {
 	if ! [[ "$1" =~ ^[0-9]+$ ]]; then
-		if [ "$2" == "-e" ] && [ "$3" ]; then
+		if [ "$2" = "-e" ] && [ "$3" ]; then
 			found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tac | sed -n "$3p" | awk -F':' '{print $1}')
 		else
 			found_line_index=$(cat $db_name | cut -d' ' -f2- | grep -nwxi "$1" | tail -n 1 | awk -F':' '{print $1}')
@@ -170,7 +170,7 @@ verify_pdf() {
 }
 download_pdf() {
 	verify_pdf "$@"
-	if [ "$2" == "-o" ] || [ "$2" == "--output" ]; then
+	if [ "$2" = "-o" ] || [ "$2" = "--output" ]; then
 		if [ -z "$3" ]; then
 			echo "No path given"
 			echo
@@ -264,7 +264,7 @@ setup_42pdf() {
 		display_help
 	else
 		read -p "Do you want to remove 42pdf_downloader? (y/N): " choice
-		if [[ "$choice" == [Yy]* ]]; then
+		if [[ "$choice" = [Yy]* ]]; then
 			rm -f "$HOME/.local/bin/42pdf"
 			rm -rf "$HOME/.config/42pdf_downloader"
 			echo "42pdf_downloader removed successfully!"
