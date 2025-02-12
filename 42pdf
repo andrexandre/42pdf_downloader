@@ -203,7 +203,7 @@ download_pdf() {
 handle_arguments() {
 	case "$2" in
 		--browser|-b)
-			open $url
+			open $url > /dev/null
 			;;
 		--title|-t)
 			curl -sf $url | pdftotext -l 1 - - | head -n 1
