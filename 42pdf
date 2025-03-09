@@ -247,17 +247,21 @@ handle_arguments() {
 
 setup_42pdf() {
 	shellrc=$HOME/."$(basename "$SHELL")"rc
+	cron_job="0 0 * * 0 cd $HOME/.config/42pdf_downloader && git fetch"
 	# include ~/.local/bin in PATH
 	if ! grep -qF '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' $shellrc; then
 		echo '# include ~/.local/bin in PATH' >> $shellrc
 		echo '[[ ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"' >> $shellrc
 	fi
-	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=n
-	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=n
+	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=no
+	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=no
+	crontab -l | grep -qF "$cron_job" || cron_setup=no
+
 	[ "$ln_setup" ] && ln -s "$HOME/.config/42pdf_downloader/42pdf" "$HOME/.local/bin/42pdf"
 	[ "$fol_setup" ] && mv $script_dir $HOME/.config
+	[ "$cron_setup" ] && (crontab -l; echo "$cron_job") | crontab -
 
-	if [ "$ln_setup" ] && [ "$fol_setup" ]; then
+	if [ "$ln_setup" ] && [ "$fol_setup" ] && [ "$cron_setup" ]; then
 		echo
 		echo 42pdf_downloader setup successfully!
 		echo
@@ -267,6 +271,7 @@ setup_42pdf() {
 		if [[ "$choice" = [Yy]* ]]; then
 			rm -f "$HOME/.local/bin/42pdf"
 			rm -rf "$HOME/.config/42pdf_downloader"
+			crontab -l | grep -vF "$cron_job" | crontab -
 			echo "42pdf_downloader removed successfully!"
 			echo "To set up 42pdf again run:"
 			echo "git clone https://github.com/andrexandre/42pdf_downloader.git ; 42pdf_downloader/42pdf setup"
