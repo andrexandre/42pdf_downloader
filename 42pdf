@@ -3,21 +3,20 @@
 display_help() {
 	echo "Usage: 42pdf NAME/ID [OPTIONS]
 
-Instantly download pdf's from 42
+Instantly download/open pdf's from 42
 
 Arguments:
- NAME/ID         The name or id of the PDF to download
- find            Find and download a PDF in the database
- pack            Shows available packs
+ NAME/ID            The name or id of the PDF to download
+ find               Find and download a PDF in the database
+ pack               Shows available packs
 
 Options:
- -h, --help      Display this help message
- -b, --browser   Open the PDF in browser
- -o, --output P  Download PDF to path P
- -t, --title     Display the PDF title
- -s, --summary   Display the PDF summary
- -v, --version   Display the PDF version
- -p, --page [N]  Display content of page N"
+ -h, --help         Display this help message
+ -d, --download [P] Download PDF to path P
+ -t, --title        Display the PDF title
+ -s, --summary      Display the PDF summary
+ -v, --version      Display the PDF version
+ -p, --page [NUM]   Display content of page NUM"
 }
 
 check_errors() {
@@ -170,20 +169,17 @@ verify_pdf() {
 }
 download_pdf() {
 	verify_pdf "$@"
-	if [ "$2" = "-o" ] || [ "$2" = "--output" ]; then
-		if [ -z "$3" ]; then
-			echo "No path given"
-			echo
-			echo "Usage: 42pdf NAME/ID -o <target_path>"
-			exit 1
+	[ -z "$2" ] && open $url > /dev/null && return
+	if [ "$2" = "-d" ] || [ "$2" = "--download" ]; then
+		if [ "$3" ]; then
+			if [ ! -d "$3" ]; then
+				echo "Invalid path: $3" ; exit 1
+			else
+				target_path=$3
+			fi
+		else
+			target_path=$PWD
 		fi
-		if [ ! -d "$3" ]; then
-			echo "Invalid path: $3"
-			exit 1
-		fi
-		target_path=$3
-	fi
-	if [ -z "$2" ] || [ "$target_path" ]; then
 		if [[ "$1" =~ ^[0-9]+$ ]]; then
 			# echo Downloaded based on ID
 			curl -sfo temp.subject.pdf $url
@@ -200,9 +196,6 @@ download_pdf() {
 }
 handle_arguments() {
 	case "$2" in
-		--browser|-b)
-			open $url > /dev/null
-			;;
 		--title|-t)
 			curl -sf $url | pdftotext -l 1 - - | head -n 1
 			;;

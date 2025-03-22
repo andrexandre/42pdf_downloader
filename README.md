@@ -1,6 +1,6 @@
 # 42 PDF Downloader
 
-This script makes it instant downloading pdfs from 42
+This script makes it instant downloading (or opening in the browser) pdfs from 42
 
 It has a database that is actively being updated with the latest subjects
 
@@ -14,26 +14,26 @@ git clone https://github.com/andrexandre/42pdf_downloader ; 42pdf_downloader/42p
 ### Arguments and Options:
 - `./42pdf NAME/ID [OPTION]`
 
-- `NAME/ID`: The name or id of the PDF to download
+- `NAME/ID`: The name or ID of the PDF
 
-- `[OPTION]`: [--help/browser/output/title/summary/version/page]
+- `[OPTION]`: [--help/download/title/summary/version/page]
 
 - `find`: Searches for a pdf in the database
 
-- `pack`: Shows available packs
+- `pack`: Shows available pdf packs
 
 ### Examples:
-- Download a PDF by name:
+- Open a PDF by name:
   ```bash
   42pdf 'so long'
   ```
-- Download a PDF by ID:
+- Open a PDF by ID:
   ```bash
   42pdf 123456
   ```
-- Quickly open the PDF in the browser:
+- Download PDF:
   ```bash
-  42pdf ft_irc -b
+  42pdf ft_irc -d
   ```
 - Display the summary of the PDF:
   ```bash
@@ -41,10 +41,10 @@ git clone https://github.com/andrexandre/42pdf_downloader ; 42pdf_downloader/42p
   ```
 - Download PDF to target path:
   ```bash
-  42pdf 1560 -o ~/Documents
+  42pdf 1560 -d ~/Documents
   ```
 
-#### To remove just run setup and 'y'
+#### To remove just run setup and confirm with 'y'
 ```bash
 42pdf setup
 ```
