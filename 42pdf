@@ -182,10 +182,8 @@ download_pdf() {
 			exit 1
 		fi
 		target_path=$3
-	else
-		target_path=.
 	fi
-	if [ -z "$2" ] || [ "$target_path" != "." ]; then
+	if [ -z "$2" ] || [ "$target_path" ]; then
 		if [[ "$1" =~ ^[0-9]+$ ]]; then
 			# echo Downloaded based on ID
 			curl -sfo temp.subject.pdf $url
@@ -226,6 +224,10 @@ handle_arguments() {
 			fi
 			;;
 		--page|-p)
+			if ! [[ "$3" =~ ^[0-9]+$ ]]; then
+				echo "Invalid page number: $3"
+				exit 1
+			fi
 			if [ -z "$3" ]; then
 				curl -sf $url | pdftotext - -
 			else
