@@ -76,7 +76,7 @@ download_pdf_entry() {
 			entry=$(echo $line | cut -d' ' -f2-)
 			# echo Returned $1 $line
 		done
-		download_pdf "$(echo $line | awk '{print $1}')"
+		download_pdf "$(echo $line | awk '{print $1}')" -d || continue
 		entry=$(echo $entry | tr ' ' '-' |  tr '/' '-' | sed 's/--*/-/g')
 		mv "$pdf_name.subject.pdf" "c_piscine/$pdf_name.$entry.subject.pdf"
 	done
@@ -98,7 +98,7 @@ download_pack() {
 			for project in "Libft" "ft_printf" "Get Next Line" "Born2beRoot" "minitalk" \
 					"pipex" "push_swap" "fdf" "fract’ol" "So Long" "philosophers" "minishell" \
 					"Net_Practice" "miniRT" "cub3d" "inception" "webserv" "ft_irc" "ft_transcendence"; do
-				download_pdf "$project"
+				download_pdf "$project" -d || continue
 				mv "$pdf_name.subject.pdf" "common_core"
 			done
 			;&
@@ -106,7 +106,7 @@ download_pack() {
 			echo "Downloading C++ Modules pack..."
 			mkdir -p "cpp_modules"
 			for i in {00..09}; do
-				download_pdf "C++ - Module $i"
+				download_pdf "C++ - Module $i" -d
 				mv "$pdf_name.subject.pdf" "cpp_modules"
 			done
 			if [ "$pack_name" = "common_core" ]; then
@@ -115,16 +115,16 @@ download_pack() {
 			;;
 		"mysterious")
 			echo "Downloading Mysterious pack..."
-			download_pdf "???"
-			download_pdf "β"
-			download_pdf "6/2/2023"
+			download_pdf "???" -d
+			download_pdf "β" -d
+			download_pdf "6/2/2023" -d
 			;;
 		"all_42_pdf")
 			echo "Downloading All 42 subjects pack..."
 			mkdir -p "all_42_pdf"
 			all_subjects=$(cat $db_name | cut -d' ' -f2- | sort | uniq)
 			echo "$all_subjects" | while read -r project; do
-				download_pdf "$project"
+				download_pdf "$project" -d || continue
 				mv "$pdf_name.subject.pdf" "all_42_pdf"
 			done
 			;;
@@ -163,12 +163,11 @@ verify_pdf() {
 	url=https://cdn.intra.42.fr/pdf/pdf/$pdf_id/en.subject.pdf
 	status_code=$(curl -sfo /dev/null -w "%{http_code}\n" --head $url)
 	if [ "$status_code" -ne 200 ]; then
-		echo "Subject of id: $pdf_id isn't available"
-		exit 1
+		echo "Subject of id: $pdf_id isn't available" ; return 1
 	fi
 }
 download_pdf() {
-	verify_pdf "$@"
+	verify_pdf "$@" || return 1
 	[ -z "$2" ] && open $url > /dev/null && return
 	if [ "$2" = "-d" ] || [ "$2" = "--download" ]; then
 		if [ "$3" ]; then
