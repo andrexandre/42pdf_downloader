@@ -34,46 +34,6 @@ update_database_in_order() {
 	done
 }
 
-create_pdf_id_db_super_fast() {
-	echo sh*t\'s so fast that you need a gigabit connection to run, ok? starting in 5 sec...
-	if ! command -v gobuster &> /dev/null; then
-		export list="install_cmd_rootless gobuster" ; curl -sL andrexandre.github.io | sh
-	fi
-	sleep 5
-	cd $script_dir
-	# create url list for gobuster
-	list_name=semi_url_db.txt
-	url=/en.subject.pdf
-	echo -n > $list_name
-	for ((i=start_id; i<=end_id; i++)); do
-		echo "$i$url" >> $list_name
-	done
-
-	threads_num=50
-	pdf_id_db_name=pdf_id_db.txt
-	echo Creating pdf_id_db with gobuster
-	gobuster -q -n -u https://cdn.intra.42.fr/pdf/pdf -w $list_name -t $threads_num > $pdf_id_db_name
-
-	rm $list_name
-	sed -i 's/\/en\.subject\.pdf//g' $pdf_id_db_name
-	sed -i 's/\///g' $pdf_id_db_name
-	sort -no $pdf_id_db_name $pdf_id_db_name
-}
-update_database_super_fast() {
-	create_pdf_id_db_super_fast
-
-	echo Started updating from $start_id to $end_id
-	threads_num=200
-	cat $pdf_id_db_name | xargs -P $threads_num -I {} bash -c '
-		url=https://cdn.intra.42.fr/pdf/pdf/{}/en.subject.pdf
-		pdf_name=$(curl -sfo - $url | pdftotext -l 1 - - | head -n 1)
-		echo "{} $pdf_name" >> pdf_db.txt
-	'
-	rm $pdf_id_db_name
-	sort -n -o $db_name $db_name
-	cd - > /dev/null
-}
-
 migrate_database() {
 	old_db_name=$script_dir/old_pdf_db.txt
 	if [ ! -f $old_db_name ]; then

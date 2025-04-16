@@ -279,9 +279,6 @@ main() {
 		update)
 			update_database
 			;;
-		update-fast)
-			update_database_super_fast
-			;;
 		migrate)
 			migrate_database
 			;;
