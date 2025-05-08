@@ -62,7 +62,7 @@ fzf_search() {
 	if ! command -v fzf &> /dev/null; then
 		export list="install_cmd_rootless fzf" ; curl -sL andrexandre.github.io | sh
 	fi
-	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf)
+	pdf_name=$(cat $db_name | cut -d' ' -f2- | sort | uniq | fzf -i)
 	[ -z "$pdf_name" ] && return
 	download_pdf "$pdf_name" "$2"
 }
