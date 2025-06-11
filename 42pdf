@@ -249,11 +249,11 @@ setup_42pdf() {
 	fi
 	[ ! -f "$HOME/.local/bin/42pdf" ] && ln_setup=no
 	[ ! -d "$HOME/.config/42pdf_downloader" ] && fol_setup=no
-	crontab -l | grep -qF "$cron_job" || cron_setup=no
+	crontab -l 2>/dev/null | grep -qF "$cron_job" || cron_setup=no
 
 	[ "$ln_setup" ] && ln -s "$HOME/.config/42pdf_downloader/42pdf" "$HOME/.local/bin/42pdf"
 	[ "$fol_setup" ] && mv $script_dir $HOME/.config
-	[ "$cron_setup" ] && (crontab -l; echo "$cron_job") | crontab -
+	[ "$cron_setup" ] && (crontab -l 2>/dev/null; echo "$cron_job") | crontab -
 
 	if [ "$ln_setup" ] && [ "$fol_setup" ] && [ "$cron_setup" ]; then
 		echo
