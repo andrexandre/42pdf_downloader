@@ -1,7 +1,7 @@
 # to be included by 42pdf
 
 start_id=$(cat $db_name | tail -n 1 | awk '{print $1}')
-id_batch_size=1500
+id_batch_size=2000
 let start_id=start_id+1
 let end_id=start_id+id_batch_size
 
