@@ -25841,3 +25841,66 @@
 176928 Connect Four
 176929 Retro MFA
 176930 ft_shmup
+176931 C Piscine
+176935 Computor v1
+176937 Inception
+176938 Training Piscine Python for Data Science - 0
+176939 fract’ol
+176940 Libasm
+176941 C-Piscine’s final project
+176946 C Piscine
+176950 C Piscine
+176954 C Piscine
+176958 Piscine Reloaded
+176959 Lem-IPC
+176960 Data Science × Logistic Regression
+176961 Webserv
+176962 Data Science × Logistic Regression
+176963 Webserv
+176964 OBJECT ORIENTED PISCINE
+176965 Training Python-Django - 1
+176967 Piscine datascience - 0
+176968 Unity Piscine - Module04
+176969 Unity Piscine - Module03
+176970 Unity Piscine - Module02
+176971 Unity Piscine: Quick presentation
+176972 Unity Piscine - Module05
+176973 Unity Piscine - Module00
+176974 Unity Piscine - Module06
+176975 Piscine Unity - Module01
+176976 Training Piscine Python for Data Science - 0
+176977 Piscines: Quick presentation
+176978 Tinky Winkey
+176979 Enter the Matrix
+176980 Inception-of-Things
+176981 ft_malcolm
+176982 Libasm
+176983 Webserv
+176984 OBJECT ORIENTED PISCINE
+176985 Training Python-Django - 1
+176987 Piscine datascience - 0
+176988 Unity Piscine - Module04
+176989 Unity Piscine - Module03
+176990 Unity Piscine - Module02
+176991 Unity Piscine: Quick presentation
+176992 Unity Piscine - Module05
+176993 Unity Piscine - Module00
+176994 Unity Piscine - Module06
+176995 Piscine Unity - Module01
+176996 Training Piscine Python for Data Science - 0
+176997 Piscines: Quick presentation
+176998 Libasm
+176999 Webserv
+177000 Piscines: Quick presentation
+177001 Inception-of-Things
+177002 Machine Learning project
+177003 Training Piscine Python for Data Science - 0
+177004 Libasm
+177005 Webserv
+177006 ft_ping
+177007 Imersão GenAI para Desenvolvedores
+177008 Imersão GenAI para Desenvolvedores
+177009 Imersão GenAI para Desenvolvedores
+177010 Imersão GenAI para Desenvolvedores
+177011 Imersão GenAI para Desenvolvedores
+177012 Imersão GenAI para Desenvolvedores
